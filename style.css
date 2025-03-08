@@ -1,0 +1,327 @@
+:root {
+  --table-bg: var(--wp--preset--color--background, #111);
+  --table-text: var(--wp--preset--color--foreground, #f1f1f1);
+  --table-border: var(--wp--preset--color--border, #333);
+  --card-bg: var(--wp--preset--color--secondary, #1a1a1a);
+  --card-text: var(--wp--preset--color--foreground, #f1f1f1);
+  --card-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* Table Styling */
+.realms-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: var(--table-bg);
+  color: var(--table-text);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin: 0 auto 1.5rem;
+}
+
+.realms-table th,
+.realms-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.realms-table th {
+  font-weight: bold;
+  background-color: var(--table-border);
+  color: var(--table-text);
+  text-align: center;
+  border-bottom: 0.125rem solid var(--wp--preset--color--accent, #0a84ff);
+}
+
+.realms-table td {
+  border-bottom: 0.0625rem solid var(--table-border);
+}
+
+.realms-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.realms-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* Player Profile */
+.player-profile h1 {
+  text-align: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  font-size: 2.5rem;
+  color: var(--wp--preset--color--accent, #0a84ff);
+}
+
+.player-profile h3,
+.player-profile h4 {
+  text-align: center;
+}
+
+/* Player Profile Overview & Stats Tables */
+.realms-table.player-profile-overview,
+.realms-table.player-profile-stats {
+  width: auto;
+  border-radius: 0.5rem;
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  box-shadow: 0 0.125rem 0.25rem var(--card-shadow);
+}
+
+.realms-table.player-profile-overview th,
+.realms-table.player-profile-overview td,
+.realms-table.player-profile-stats th,
+.realms-table.player-profile-stats td {
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+}
+
+.realms-table.player-profile-stats {
+  font-size: 1.1rem;
+}
+
+/* Player Profile Overview Tables */
+.player-profile-overview-tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  max-width: 37.5rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.realms-table.player-profile-rating,
+.realms-table.player-profile-rank {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.player-profile-overview-tables .realms-table td {
+  text-align: center;
+}
+
+/* Player Profile History */
+.realms-table.player-profile-history {
+  width: 100%;
+  margin: 1.25rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Center columns in player-profile-history */
+.realms-table.player-profile-history th:nth-child(2),
+.realms-table.player-profile-history th:nth-child(5),
+.realms-table.player-profile-history th:nth-child(6),
+.realms-table.player-profile-history td:nth-child(2),
+.realms-table.player-profile-history td:nth-child(5),
+.realms-table.player-profile-history td:nth-child(6) {
+  text-align: center;
+}
+
+/* Center columns in player-profile-history-small */
+.realms-table.player-profile-history-small th:nth-child(1),
+.realms-table.player-profile-history-small th:nth-child(4),
+.realms-table.player-profile-history-small th:nth-child(5),
+.realms-table.player-profile-history-small td:nth-child(1),
+.realms-table.player-profile-history-small td:nth-child(4),
+.realms-table.player-profile-history-small td:nth-child(5) {
+  text-align: center;
+}
+
+/* Center columns in faction-rankings */
+.realms-table.faction-rankings th:nth-child(1),
+.realms-table.faction-rankings th:nth-child(2),
+.realms-table.faction-rankings th:nth-child(4),
+.realms-table.faction-rankings th:nth-child(5),
+.realms-table.faction-rankings td:nth-child(1),
+.realms-table.faction-rankings td:nth-child(2),
+.realms-table.faction-rankings td:nth-child(4),
+.realms-table.faction-rankings td:nth-child(5) {
+  text-align: center;
+}
+
+/* Rankings Table Columns */
+.realms-table.rankings-table th:nth-child(1),
+.realms-table.rankings-table td:nth-child(1) {
+  width: 10%;
+  text-align: center;
+}
+.realms-table.rankings-table th:nth-child(2),
+.realms-table.rankings-table td:nth-child(2) {
+  width: 40%;
+  text-align: center;
+}
+.realms-table.rankings-table th:nth-child(3),
+.realms-table.rankings-table td:nth-child(3) {
+  width: 20%;
+  text-align: center;
+}
+.realms-table.rankings-table th:nth-child(4){
+  width: 30%;
+  text-align: center;
+}
+.realms-table.rankings-table td:nth-child(4) {
+  width: 30%;
+  text-align: left;
+}
+
+/* Events List */
+.realms-table.events-list {
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Faction Rankings Header */
+.faction-rankings-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+  color: var(--wp--preset--color--accent, #0a84ff);
+}
+
+.realms-table.faction-rankings {
+  width: 100%;
+  margin: 0 auto 1.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Faction Icons */
+.realms-faction-icon-large {
+  height: 6.25rem;
+  margin-right: 0.625rem;
+  vertical-align: middle;
+}
+
+.realms-faction-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Rating Cell */
+.rating-cell.italic {
+  font-style: italic;
+}
+
+/* Utility Classes */
+.hidden {
+  display: none;
+}
+
+.nounderline {
+  text-decoration: none;
+}
+
+.realms-table.player-profile-history-small {
+  display: none;
+}
+
+.realms-table.player-profile-history-small .event-header td {
+  text-align: center;
+  font-weight: bold;
+  border-top: 0.125rem solid var(--wp--preset--color--accent, #0a84ff);
+}
+
+.realms-table.player-profile-history td:nth-child(1) {
+  font-weight: bold;
+}
+
+/* Search Input */
+#search-input {
+  width: 80%;
+  padding: 0.625rem;
+  margin: 0.625rem auto;
+  display: block;
+  box-sizing: border-box;
+  font-size: 1rem;
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  border: 0.0625rem solid var(--table-border);
+  border-radius: 0.25rem;
+}
+
+/* Truncate Utility Classes */
+.truncate-large {
+  display: inline;
+}
+
+.truncate-small {
+  display: none;
+}
+
+/* --- Responsive Styling --- */
+
+/* Breakpoint: max-width 680px and min-width 481px */
+@media screen and (max-width: 840px) and (min-width: 481px) {
+  .realms-table th,
+  .realms-table td {
+    padding: 0.5rem 0.375rem;
+    font-size: 0.8rem;
+  }
+  .realms-table.player-profile-history-small {
+    font-size: 0.7rem;
+  }
+  .realms-faction-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  .realms-table.player-profile-stats th,
+  .realms-table.player-profile-stats td {
+    font-size: 1.1rem;
+  }
+
+  .realms-table.player-profile-rating th,
+  .realms-table.player-profile-rating td,
+  .realms-table.player-profile-rank th,
+  .realms-table.player-profile-rank td {
+    font-size: 1.4rem;
+    margin: 0;
+  }
+}
+
+/* Breakpoint: max-width 480px */
+@media screen and (max-width: 480px) {
+  .realms-table th,
+  .realms-table td {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.7rem;
+  }
+  .realms-faction-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  .realms-table.player-profile-history {
+    display: none;
+  }
+  .realms-table.player-profile-history-small {
+    display: table;
+  }
+  .realms-table.player-profile-stats th,
+  .realms-table.player-profile-stats td {
+    font-size: 1rem;
+  }
+
+  .realms-table.player-profile-rating th,
+  .realms-table.player-profile-rating td,
+  .realms-table.player-profile-rank th,
+  .realms-table.player-profile-rank td {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  .event-card {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Breakpoint: max-width 360px */
+@media screen and (max-width: 360px) {
+  .truncate-large {
+    display: none;
+  }
+  .truncate-small {
+    display: inline;
+  }
+}
