@@ -84,12 +84,9 @@ Use the **Calculate Elos** admin page to trigger manual Elo rating recalculation
 ## File Structure
 
     8realms-rankings/
-    ├── 8realms-rankings.php               # Main plugin file; entry point for initialization and hooks
+    ├── 8realms-rankings.php               # Main plugin file; creates core tables, entry point for initialization and hooks
     ├── backups/                           # Directory for storing backup CSV files of database tables
     ├── blocks.js                          # Registers Gutenberg blocks for displaying rankings, profiles, events, etc.
-    ├── data-display.php                   # Contains functions for front-end display (player profiles, rankings, events, faction rankings)
-    ├── data-ingest.php                    # Handles parsing and ingestion of tournament data from BCP and SNL sources
-    ├── data-management.php                # Admin functions to manage tournament data (view, edit, delete, search) and backup management
     ├── editor.css                         # Editor-specific styles for Gutenberg blocks
     ├── faction-icons/                     # Default SVG icons for factions
     ├── faction-icons-black/               # Black-themed SVG icons for factions
@@ -99,6 +96,9 @@ Use the **Calculate Elos** admin page to trigger manual Elo rating recalculation
     ├── grand-alliance-icons/              # Default SVG icons for grand alliances
     ├── grand-alliance-icons-black/        # Black-themed SVG icons for grand alliances
     ├── LICENSE.md                         # Plugin license details
+    ├── rankings-display.php               # Contains functions for front-end display (player profiles, rankings, events, faction rankings)
+    ├── rankings-ingest.php                # Handles parsing and ingestion of tournament data from BCP and SNL sources
+    ├── rankings-management.php            # Admin functions to manage tournament data (view, edit, delete, search) and backups
     ├── README.md                          # Plugin documentation and usage instructions
     └── style.css                          # Front-end stylesheet for tables, player profiles, and overall plugin styling
 

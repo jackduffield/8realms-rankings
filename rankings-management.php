@@ -1,53 +1,14 @@
 <?php
 
 /**
- * Data Management Functionality
+ * Rankings Management Functionality
  *
- * This file contains the functions to create and manage the match_data table,
+ * This file contains the functions to manage the match_data table,
  * perform backups/restores, manage tournament data (view, edit, delete, search),
- * and provide combined admin menus, as well as calculate Elos.
+ * and provide combined admin menus.
  *
- * @package DataManagement
+ * @package RankingsManagement
  */
-
-
-//------------------------------------------------------------------------------
-// Table Creation on Activation
-//------------------------------------------------------------------------------
-
-/**
- * Create the match_data table.
- *
- * Creates the 'match_data' table used to store parsed tournament data
- * from both Best Coast Pairings (BCP) and Stats and Ladders (SNL).
- *
- * @return void
- */
-function data_management_create_match_data_table() {
-    global $wpdb;
-    $table_name      = $wpdb->prefix . 'match_data';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        tournament_name varchar(255) NOT NULL,
-        start_date date NOT NULL,
-        round int NOT NULL,
-        table_number int NOT NULL,
-        player_1_name varchar(255) NOT NULL,
-        player_1_faction varchar(255) NOT NULL,
-        player_1_outcome varchar(255) NOT NULL,
-        player_2_name varchar(255) NOT NULL,
-        player_2_faction varchar(255) NOT NULL,
-        player_2_outcome varchar(255) NOT NULL,
-        source varchar(255) NOT NULL,
-        PRIMARY KEY  (id)
-    ) $charset_collate;";
-
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta( $sql );
-}
-register_activation_hook( __FILE__, 'data_management_create_match_data_table' );
 
 
 //------------------------------------------------------------------------------
@@ -61,12 +22,12 @@ register_activation_hook( __FILE__, 'data_management_create_match_data_table' );
  *
  * @return void
  */
-function data_management_backup_activate() {
-    if ( ! wp_next_scheduled( 'data_management_weekly_backup' ) ) {
-        wp_schedule_event( strtotime( 'next Monday 04:00' ), 'weekly', 'data_management_weekly_backup' );
+function rankings_backup_activate() {
+    if ( ! wp_next_scheduled( 'rankings_weekly_backup' ) ) {
+        wp_schedule_event( strtotime( 'next Monday 04:00' ), 'weekly', 'rankings_weekly_backup' );
     }
 }
-register_activation_hook( __FILE__, 'data_management_backup_activate' );
+register_activation_hook( __FILE__, 'rankings_backup_activate' );
 
 /**
  * Clear the backup scheduling on plugin deactivation.
@@ -74,9 +35,9 @@ register_activation_hook( __FILE__, 'data_management_backup_activate' );
  * @return void
  */
 function data_management_backup_deactivate() {
-    wp_clear_scheduled_hook( 'data_management_weekly_backup' );
+    wp_clear_scheduled_hook( 'rankings_weekly_backup' );
 }
-register_deactivation_hook( __FILE__, 'data_management_backup_deactivate' );
+register_deactivation_hook( __FILE__, 'rankings_backup_deactivate' );
 
 /**
  * Perform the weekly backup.
@@ -85,11 +46,11 @@ register_deactivation_hook( __FILE__, 'data_management_backup_deactivate' );
  *
  * @return void
  */
-function data_management_weekly_backup() {
-    data_management_backup_table( 'elo_ratings' );
-    data_management_backup_table( 'match_data' ); // Updated from bcp_data to match_data.
+function rankings_weekly_backup() {
+    rankings_backup_table( 'elo_ratings' );
+    rankings_backup_table( 'match_data' );
 }
-add_action( 'data_management_weekly_backup', 'data_management_weekly_backup' );
+add_action( 'rankings_weekly_backup', 'rankings_weekly_backup' );
 
 /**
  * Backup a given table to a CSV file.
@@ -97,7 +58,7 @@ add_action( 'data_management_weekly_backup', 'data_management_weekly_backup' );
  * @param string $table The table name (without prefix) to backup.
  * @return void
  */
-function data_management_backup_table( $table ) {
+function rankings_backup_table( $table ) {
     global $wpdb;
     $table_name = $wpdb->prefix . $table;
     $backup_dir = plugin_dir_path( __FILE__ ) . 'backups/';
@@ -125,7 +86,7 @@ function data_management_backup_table( $table ) {
  * @param string $backup_file The backup file name (located in the backups folder).
  * @return void
  */
-function data_management_restore_table( $table, $backup_file ) {
+function rankings_restore_table( $table, $backup_file ) {
     global $wpdb;
     $table_name       = $wpdb->prefix . $table;
     $backup_file_path = plugin_dir_path( __FILE__ ) . 'backups/' . $backup_file;
@@ -148,7 +109,7 @@ function data_management_restore_table( $table, $backup_file ) {
  * @param string $backup_file The backup file name to delete.
  * @return void
  */
-function data_management_delete_backup( $backup_file ) {
+function rankings_delete_backup( $backup_file ) {
     $backup_file_path = plugin_dir_path( __FILE__ ) . 'backups/' . $backup_file;
     if ( file_exists( $backup_file_path ) ) {
         unlink( $backup_file_path );
@@ -161,7 +122,7 @@ function data_management_delete_backup( $backup_file ) {
  * @param string $table The table name (without prefix) for which to list backups.
  * @return void
  */
-function data_management_list_backups( $table ) {
+function rankings_list_backups( $table ) {
     $backup_dir   = plugin_dir_path( __FILE__ ) . 'backups/';
     $backup_files = glob( $backup_dir . $table . '_*.csv' );
     echo '<table class="widefat fixed" cellspacing="0">';
@@ -192,46 +153,6 @@ function data_management_list_backups( $table ) {
     echo '</tbody></table>';
 }
 
-
-//------------------------------------------------------------------------------
-// Data Manager Functionality
-//------------------------------------------------------------------------------
-
-/**
- * Create the match_data table on activation if it doesn't exist.
- *
- * For backward compatibility with Data Manager functionality.
- *
- * @return void
- */
-function data_management_create_table() {
-    global $wpdb;
-    $table_name      = $wpdb->prefix . 'match_data';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) != $table_name ) {
-        $sql = "CREATE TABLE $table_name (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            tournament_name varchar(255) NOT NULL,
-            start_date date NOT NULL,
-            round int NOT NULL,
-            table_number int NOT NULL,
-            player_1_name varchar(255) NOT NULL,
-            player_1_faction varchar(255) NOT NULL,
-            player_1_outcome varchar(255) NOT NULL,
-            player_2_name varchar(255) NOT NULL,
-            player_2_faction varchar(255) NOT NULL,
-            player_2_outcome varchar(255) NOT NULL,
-            source varchar(255) NOT NULL,
-            PRIMARY KEY  (id)
-        ) $charset_collate;";
-
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta( $sql );
-    }
-}
-register_activation_hook( __FILE__, 'data_management_create_table' );
-
 /**
  * Display the main Data Manager page.
  *
@@ -239,32 +160,32 @@ register_activation_hook( __FILE__, 'data_management_create_table' );
  *
  * @return void
  */
-function data_manager_page() {
+function rankings_rankings_page() {
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
 
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'edit' && isset( $_GET['id'] ) ) {
-        data_manager_display_edit_row_form( intval( $_GET['id'] ) );
+        rankings_edit_row_form( intval( $_GET['id'] ) );
         return;
     }
 
     if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
         if ( isset( $_POST['delete_tournament'] ) ) {
-            data_management_delete_tournament( $_POST['tournament_name'] );
+            rankings_delete_tournament( $_POST['tournament_name'] );
         } elseif ( isset( $_POST['view_tournament'] ) ) {
-            data_manager_view_tournament( $_POST['tournament_name'] );
+            rankings_view_tournament( $_POST['tournament_name'] );
         } elseif ( isset( $_POST['delete_row'] ) ) {
-            data_manager_delete_row( $_POST['id'] );
-            data_manager_view_tournament( $_POST['tournament_name'] );
+            rankings_delete_row( $_POST['id'] );
+            rankings_view_tournament( $_POST['tournament_name'] );
         } elseif ( isset( $_POST['edit_row'] ) ) {
-            data_manager_display_edit_row_form( $_POST['id'] );
+            rankings_edit_row_form( $_POST['id'] );
         } elseif ( isset( $_POST['update_row'] ) ) {
-            data_manager_update_row( $_POST );
-            data_manager_view_tournament( $_POST['tournament_name'] );
+            rankings_update_row( $_POST );
+            rankings_view_tournament( $_POST['tournament_name'] );
         }
     } else {
-        data_manager_display_tournament_table();
+        rankings_show_tournament_table();
     }
 }
 
@@ -274,12 +195,12 @@ function data_manager_page() {
  * @param string $tournament_name The tournament name.
  * @return void
  */
-function data_management_delete_tournament( $tournament_name ) {
+function rankings_delete_tournament( $tournament_name ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $wpdb->delete( $table_name, array( 'tournament_name' => $tournament_name ) );
     echo '<div class="updated"><p>Tournament data deleted successfully!</p></div>';
-    data_manager_display_tournament_table();
+    rankings_show_tournament_table();
 }
 
 /**
@@ -288,7 +209,7 @@ function data_management_delete_tournament( $tournament_name ) {
  * @param string $tournament_name The tournament name.
  * @return void
  */
-function data_manager_view_tournament( $tournament_name ) {
+function rankings_view_tournament( $tournament_name ) {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -341,7 +262,7 @@ function data_manager_view_tournament( $tournament_name ) {
  *
  * @return void
  */
-function data_manager_display_tournament_table() {
+function rankings_show_tournament_table() {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -387,7 +308,7 @@ function data_manager_display_tournament_table() {
  * @param int $id The row id.
  * @return void
  */
-function data_manager_delete_row( $id ) {
+function rankings_delete_row( $id ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $wpdb->delete( $table_name, array( 'id' => $id ) );
@@ -400,7 +321,7 @@ function data_manager_delete_row( $id ) {
  * @param int $id The row id.
  * @return void
  */
-function data_manager_display_edit_row_form( $id ) {
+function rankings_edit_row_form( $id ) {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -478,7 +399,7 @@ function data_manager_display_edit_row_form( $id ) {
  * @param array $data The POST data containing updated row values.
  * @return void
  */
-function data_manager_update_row( $data ) {
+function rankings_update_row( $data ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
 
@@ -518,7 +439,7 @@ function data_manager_update_row( $data ) {
  *
  * @return void
  */
-function data_manager_search_page() {
+function rankings_search_page() {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -539,9 +460,9 @@ function data_manager_search_page() {
             }
         }
         unset( $value );
-        display_search_results( $search_params );
+        rankings_show_search_results( $search_params );
     } else {
-        display_search_form( $search_params );
+        rankings_show_search_form( $search_params );
     }
 }
 
@@ -551,7 +472,7 @@ function data_manager_search_page() {
  * @param array $search_params The default search parameters.
  * @return void
  */
-function display_search_form( $search_params ) {
+function rankings_show_search_form( $search_params ) {
     ?>
     <div class="wrap">
         <h1>Search Data</h1>
@@ -579,7 +500,7 @@ function display_search_form( $search_params ) {
  * @param array $search_params The search parameters.
  * @return void
  */
-function display_search_results( $search_params ) {
+function rankings_show_search_results( $search_params ) {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -655,22 +576,6 @@ function display_search_results( $search_params ) {
     echo '</div>';
 }
 
-
-//------------------------------------------------------------------------------
-// Enqueue Plugin Styles
-//------------------------------------------------------------------------------
-
-/**
- * Enqueue the plugin stylesheet.
- *
- * @return void
- */
-function data_management_enqueue_scripts() {
-    wp_enqueue_style( 'data-management-styles', plugins_url( 'style.css', __FILE__ ) );
-}
-add_action( 'wp_enqueue_scripts', 'data_management_enqueue_scripts' );
-
-
 //------------------------------------------------------------------------------
 // Combined Admin Menu for Data Management
 //------------------------------------------------------------------------------
@@ -685,14 +590,14 @@ add_action( 'wp_enqueue_scripts', 'data_management_enqueue_scripts' );
  *
  * @return void
  */
-function data_management_menu() {
-    add_menu_page( 'Manage Data', 'Manage Data', 'edit_others_posts', 'data-management', 'data_manager_page' );
-    add_submenu_page( 'data-management', 'Manage Data', 'Manage Data', 'edit_others_posts', 'data-manager', 'data_manager_page' );
-    add_submenu_page( 'data-management', 'Search Data', 'Search Data', 'edit_others_posts', 'search-data', 'data_manager_search_page' );
-    add_submenu_page( 'data-management', 'Manage Backups', 'Manage Backups', 'edit_others_posts', 'backup-manager', 'data_management_backup_page' );
-    remove_submenu_page( 'data-management', 'data-management' );
+function manage_rankings_menu() {
+    add_menu_page( 'Manage Rankings', 'Manage Rankings', 'edit_others_posts', 'rankings-management', 'rankings_page' );
+    add_submenu_page( 'rankings-management', 'Manage Data', 'Manage Data', 'edit_others_posts', 'data-manager', 'rankings_page' );
+    add_submenu_page( 'rankings-management', 'Search Data', 'Search Data', 'edit_others_posts', 'search-data', 'rankings_search_page' );
+    add_submenu_page( 'rankings-management', 'Manage Backups', 'Manage Backups', 'edit_others_posts', 'backup-manager', 'rankings_backup_page' );
+    remove_submenu_page( 'rankings-management', 'rankings-management' );
 }
-add_action( 'admin_menu', 'data_management_menu' );
+add_action( 'admin_menu', 'manage_rankings_menu' );
 
 
 //------------------------------------------------------------------------------
@@ -707,7 +612,7 @@ add_action( 'admin_menu', 'data_management_menu' );
  *
  * @return void
  */
-function data_management_backup_page() {
+function rankings_backup_page() {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }

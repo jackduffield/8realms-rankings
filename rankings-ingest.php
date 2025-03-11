@@ -1,80 +1,41 @@
 <?php
 
 /**
- * Data Ingest Functionality
+ * Rankings Ingest Functionality
  *
  * Provides database table creation, data parsing, Elo rating calculation,
  * and admin pages for ingesting and processing tournament data.
  *
- * @package DataIngest
+ * @package RankingsIngest
  */
-
-//------------------------------------------------------------------------------
-// Database Setup & Plugin Activation
-//------------------------------------------------------------------------------
-
-/**
- * Create the match_data table.
- *
- * Creates the table 'match_data' which stores parsed tournament
- * data. It holds information such as tournament name, start date, round, table number,
- * player names, factions, outcomes, and the data source.
- *
- * @return void
- */
-function data_ingest_create_table() {
-    global $wpdb;
-    $table_name      = $wpdb->prefix . 'match_data';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        tournament_name text NOT NULL,
-        start_date date NOT NULL,
-        round smallint NOT NULL,
-        table_number smallint NOT NULL,
-        player_1_name text NOT NULL,
-        player_1_faction text NOT NULL,
-        player_1_outcome text NOT NULL,
-        player_2_name text NOT NULL,
-        player_2_faction text NOT NULL,
-        player_2_outcome text NOT NULL,
-        source text NOT NULL,
-        PRIMARY KEY  (id)
-    ) $charset_collate;";
-
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta( $sql );
-}
-register_activation_hook( __FILE__, 'data_ingest_create_table' );
 
 //------------------------------------------------------------------------------
 // Admin Menu Setup
 //------------------------------------------------------------------------------
 
 /**
- * Register admin menu pages for Data Ingest.
+ * Register admin menu pages for Rankings Ingest.
  *
- * Creates the main 'Data Ingest' menu with two submenus:
+ * Creates the main 'Ingest Rankings' menu with two submenus:
  * - BCP Parser for processing Best Coast Pairings data.
  * - SNL Parser for processing Stats and Ladders data.
  *
  * @return void
  */
-function data_ingest_menu() {
+function rankings_ingest_menu() {
     // Main menu page.
-    add_menu_page( 'Ingest Data', 'Ingest Data', 'edit_others_posts', 'data-ingest', 'data_ingest_bcp_page' );
+    add_menu_page( 'Ingest Rankings', 'Ingest Rankings', 'edit_others_posts', 'rankings-ingest', 'rankings_ingest_bcp_page' );
 
     // Submenu page for Ingest BCP Data.
-    add_submenu_page( 'data-ingest', 'Ingest BCP Data', 'Ingest BCP Data', 'edit_others_posts', 'bcp-parser', 'data_ingest_bcp_page' );
+    add_submenu_page( 'rankings-ingest', 'Ingest From BCP', 'Ingest From BCP', 'edit_others_posts', 'bcp-parser', 'rankings_ingest_bcp_page' );
 
     // Submenu page for Ingest SNL Data.
-    add_submenu_page( 'data-ingest', 'Ingest SNL Data', 'Ingest SNL Data', 'edit_others_posts', 'snl-parser', 'data_ingest_snl_page' );
+    add_submenu_page( 'rankings-ingest', 'Ingest From SNL', 'Ingest From SNL', 'edit_others_posts', 'rankings-parser', 'rankings_ingest_snl_page' );
 
     // Remove the duplicate submenu for the top-level menu.
-    remove_submenu_page( 'data-ingest', 'data-ingest' );
+    remove_submenu_page( 'rankings-ingest', 'data-ingest' );
 }
-add_action( 'admin_menu', 'data_ingest_menu' );
+add_action( 'admin_menu', 'rankings_ingest_menu' );
 
 //------------------------------------------------------------------------------
 // Data Parsing & Display Functions
@@ -92,7 +53,7 @@ add_action( 'admin_menu', 'data_ingest_menu' );
  * @return array Parsed match data.
  * @throws Exception If an error occurs during insertion.
  */
-function parse_bcp_data( $tournament_name, $start_date, $rounds ) {
+function rankings_parse_bcp_data( $tournament_name, $start_date, $rounds ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $data       = array();
@@ -178,7 +139,7 @@ function parse_bcp_data( $tournament_name, $start_date, $rounds ) {
  * @param array $data Parsed match data.
  * @return void
  */
-function display_bcp_parsed_data( $data ) {
+function rankings_show_bcp_parsed_data( $data ) {
     if ( empty( $data ) ) {
         echo '<p>No data available to display.</p>';
         return;
@@ -211,7 +172,7 @@ function display_bcp_parsed_data( $data ) {
  * @param array  $rounds          Array of rounds' raw text.
  * @return array Parsed match data.
  */
-function parse_snl_data( $tournament_name, $start_date, $rounds ) {
+function rankings_parse_snl_data( $tournament_name, $start_date, $rounds ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $data       = array();
@@ -311,7 +272,7 @@ function parse_snl_data( $tournament_name, $start_date, $rounds ) {
  * @param array $data Parsed match data.
  * @return void
  */
-function display_snl_parsed_data( $data ) {
+function rankings_show_snl_parsed_data( $data ) {
     if ( empty( $data ) ) {
         echo '<p>No data available to display.</p>';
         return;
@@ -344,7 +305,7 @@ function display_snl_parsed_data( $data ) {
  *
  * @return void
  */
-function data_ingest_bcp_page() {
+function rankings_ingest_bcp_page() {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -364,9 +325,9 @@ function data_ingest_bcp_page() {
             echo '<div class="error"><p>Please enter between 1 and 5 rounds.</p></div>';
         } else {
             try {
-                $data = parse_bcp_data( $tournament_name, $start_date, $rounds );
+                $data = rankings_parse_bcp_data( $tournament_name, $start_date, $rounds );
                 echo '<div class="updated"><p>BCP data parsed and stored successfully!</p></div>';
-                display_bcp_parsed_data( $data );
+                rankings_show_bcp_parsed_data( $data );
             } catch ( Exception $e ) {
                 echo '<div class="error"><p>' . $e->getMessage() . '</p></div>';
             }
@@ -411,7 +372,7 @@ function data_ingest_bcp_page() {
  *
  * @return void
  */
-function data_ingest_snl_page() {
+function rankings_ingest_snl_page() {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -430,9 +391,9 @@ function data_ingest_snl_page() {
             echo '<div class="error"><p>Please enter between 1 and 5 rounds.</p></div>';
         } else {
             try {
-                $data = parse_snl_data( $tournament_name, $start_date, $rounds );
+                $data = rankings_parse_snl_data( $tournament_name, $start_date, $rounds );
                 echo '<div class="updated"><p>SNL data parsed and stored successfully!</p></div>';
-                display_snl_parsed_data( $data );
+                rankings_show_snl_parsed_data( $data );
             } catch ( Exception $e ) {
                 echo '<div class="error"><p>' . $e->getMessage() . '</p></div>';
             }
@@ -481,7 +442,7 @@ function data_ingest_snl_page() {
  *
  * @return void
  */
-function display_rankings() {
+function rankings_show_elo_data() {
     if ( ! current_user_can( 'edit_others_posts' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -525,7 +486,7 @@ function display_rankings() {
  *
  * @return void
  */
-function calculate_elos() {
+function rankings_calculate_elos() {
     error_log( 'calculate_elos() function triggered.' );
     global $wpdb;
     $table_name = $wpdb->prefix . 'elo_ratings';
@@ -668,8 +629,8 @@ function elo_calculator_page() {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
 
-    if ( isset( $_POST['calculate_elos'] ) && $_POST['calculate_elos'] === 'true' ) {
-        calculate_elos();
+    if ( isset( $_POST['rankings_calculate_elos'] ) && $_POST['rankings_calculate_elos'] === 'true' ) {
+        rankings_calculate_elos();
         echo '<div class="updated notice"><p><strong>Elo calculations completed successfully.</strong></p></div>';
     }
 
@@ -677,26 +638,12 @@ function elo_calculator_page() {
     echo '<h1>Calculate Elos</h1>';
     echo '<p>The button below will update the <code>elo_ratings</code> table based on all data currently ingested into <code>match_data</code>.</p>';
     echo '<form method="post">';
-    echo '<input type="hidden" name="calculate_elos" value="true">';
+    echo '<input type="hidden" name="rankings_calculate_elos" value="true">';
     echo '<input type="submit" class="button button-primary" value="Calculate Elos Now">';
     echo '</form>';
     echo '<h2>Current Rankings</h2>';
-    display_rankings();
+    rankings_show_elo_data();
     echo '</div>';
 }
-
-//------------------------------------------------------------------------------
-// Enqueue Scripts & Styles
-//------------------------------------------------------------------------------
-
-/**
- * Enqueue plugin stylesheet.
- *
- * @return void
- */
-function data_ingest_enqueue_scripts() {
-    wp_enqueue_style( 'data-ingest-styles', plugins_url( 'style.css', __FILE__ ) );
-}
-add_action( 'wp_enqueue_scripts', 'data_ingest_enqueue_scripts' );
 
 // EOF

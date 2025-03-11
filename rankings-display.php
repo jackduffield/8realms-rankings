@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Data Display Functionality
+ * Rankings Display Functionality
  *
- * Provides database table creation, data parsing, Elo rating calculation,
- * and admin pages for ingesting and processing tournament data.
+ * Provides the necessary blocks and assets to transform and display data 
+ * from match_data and elo_ratings to users in a series of tables.
  *
- * @package DataIngest
+ * @package RankingsDisplay
  */
 
 //------------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 //------------------------------------------------------------------------------
 
 /**
- * Initialise Data Display blocks and assets.
+ * Initialise Rankings Display blocks and assets.
  *
  * Registers block editor scripts/styles and custom blocks:
  * - Rankings
@@ -24,9 +24,9 @@
  *
  * @return void
  */
-function data_display_init() {
+function rankings_init() {
     wp_register_script(
-        'data-display-editor',
+        'rankings-editor-script',
         plugins_url( 'blocks.js', __FILE__ ),
         array(
             'wp-blocks',
@@ -39,71 +39,60 @@ function data_display_init() {
     );
 
     wp_register_style(
-        'data-display-editor',
+        'rankings-editor-style',
         plugins_url( 'editor.css', __FILE__ ),
         array( 'wp-edit-blocks' )
     );
 
-    wp_register_style( 'data-display', plugins_url( 'style.css', __FILE__ ) );
+    wp_register_style( 'rankings', plugins_url( 'style.css', __FILE__ ) );
 
     register_block_type(
-        'data-display/rankings',
+        'rankings/rankings',
         array(
-            'editor_script'   => 'data-display-editor',
-            'editor_style'    => 'data-display-editor',
-            'style'           => 'data-display',
-            'render_callback' => 'data_display_rankings_render_callback',
+            'editor_script'   => 'rankings-editor-script',
+            'editor_style'    => 'rankings-editor-style',
+            'style'           => 'rankings',
+            'render_callback' => 'rankings_render_callback',
         )
     );
 
     register_block_type(
-        'data-display/searchable-rankings',
+        'rankings/searchable-rankings',
         array(
-            'editor_script'   => 'data-display-editor',
-            'editor_style'    => 'data-display-editor',
-            'style'           => 'data-display',
-            'render_callback' => 'data_display_searchable_rankings_render_callback',
+            'editor_script'   => 'rankings-editor-script',
+            'editor_style'    => 'rankings-editor-style',
+            'style'           => 'rankings',
+            'render_callback' => 'rankings_searchable_render_callback',
         )
     );
 
     register_block_type(
-        'data-display/events',
+        'rankings/events',
         array(
-            'editor_script'   => 'data-display-editor',
-            'editor_style'    => 'data-display-editor',
-            'style'           => 'data-display',
-            'render_callback' => 'data_display_events_render_callback',
+            'editor_script'   => 'rankings-editor-script',
+            'editor_style'    => 'rankings-editor-style',
+            'style'           => 'rankings',
+            'render_callback' => 'rankings_events_render_callback',
         )
     );
 
     register_block_type(
-        'data-display/faction-rankings',
+        'rankings/faction-rankings',
         array(
-            'editor_script'   => 'data-display-editor',
-            'editor_style'    => 'data-display-editor',
-            'style'           => 'data-display',
-            'render_callback' => 'faction_rankings_render_callback',
+            'editor_script'   => 'rankings-editor-script',
+            'editor_style'    => 'rankings-editor-style',
+            'style'           => 'rankings',
+            'render_callback' => 'rankings_faction_render_callback',
         )
     );
-}
-add_action( 'init', 'data_display_init' );
-
-/**
- * Initialize the Player Profile block.
- *
- * Registers the Player Profile block for detailed player profile display.
- *
- * @return void
- */
-function player_profile_block_init() {
     register_block_type(
-        'data-display/player-profile',
+        'rankings/player-profile',
         array(
-            'render_callback' => 'player_profile_render_callback',
+            'render_callback' => 'rankings_player_profile_render_callback',
         )
     );
 }
-add_action( 'init', 'player_profile_block_init' );
+add_action( 'init', 'rankings_init' );
 
 //------------------------------------------------------------------------------
 // Utility Functions
@@ -120,7 +109,7 @@ add_action( 'init', 'player_profile_block_init' );
  * @param string $plugin_dir Plugin directory URL for faction icons.
  * @return string HTML output for faction icon and link.
  */
-function render_faction_with_icon( $faction, $plugin_dir ) {
+function rankings_render_faction( $faction, $plugin_dir ) {
     static $cache = array();
 
     if ( isset( $cache[ $faction ] ) ) {
@@ -165,20 +154,20 @@ function render_faction_with_icon( $faction, $plugin_dir ) {
  *
  * @return void
  */
-function data_display_enqueue_assets() {
+function rankings_display_enqueue_assets() {
     wp_enqueue_script(
-        'rankings-display-filter',
+        'rankings-filter',
         plugins_url( 'filter.js', __FILE__ ),
         array( 'jquery' ),
         null,
         true
     );
     wp_enqueue_style(
-        'rankings-display-styles',
+        'rankings-styles',
         plugins_url( 'style.css', __FILE__ )
     );
 }
-add_action( 'wp_enqueue_scripts', 'data_display_enqueue_assets' );
+add_action( 'wp_enqueue_scripts', 'rankings_display_enqueue_assets' );
 
 /**
  * Enqueue block editor assets for Data Display.
@@ -187,9 +176,9 @@ add_action( 'wp_enqueue_scripts', 'data_display_enqueue_assets' );
  *
  * @return void
  */
-function data_display_enqueue_editor_assets() {
+function rankings_display_enqueue_editor_assets() {
     wp_enqueue_script(
-        'data-display-editor-script',
+        'rankings-editor-script',
         plugins_url( 'blocks.js', __FILE__ ),
         array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data' ),
         '1.0',
@@ -197,13 +186,13 @@ function data_display_enqueue_editor_assets() {
     );
 
     wp_enqueue_style(
-        'data-display-editor-style',
+        'rankings-editor-style',
         plugins_url( 'editor.css', __FILE__ ),
         array( 'wp-edit-blocks' ),
         '1.0'
     );
 }
-add_action( 'enqueue_block_editor_assets', 'data_display_enqueue_editor_assets' );
+add_action( 'enqueue_block_editor_assets', 'rankings_display_enqueue_editor_assets' );
 
 //------------------------------------------------------------------------------
 // Render Callback Functions
@@ -217,7 +206,7 @@ add_action( 'enqueue_block_editor_assets', 'data_display_enqueue_editor_assets' 
  * @param array $attributes Block attributes.
  * @return string HTML output for the rankings table.
  */
-function data_display_rankings_render_callback( $attributes ) {
+function rankings_render_callback( $attributes ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'elo_ratings';
     $players    = $wpdb->get_results( "SELECT * FROM $table_name ORDER BY rank ASC", ARRAY_A );
@@ -244,7 +233,7 @@ function data_display_rankings_render_callback( $attributes ) {
         $output      .= '<td>' . esc_html( $player['rank'] ) . '</td>';
         $output      .= '<td><a href="' . esc_url( get_site_url() . '/player-profile?player=' . urlencode( $player['player_name'] ) ) . '">' . esc_html( $player['player_name'] ) . '</a></td>';
         $output      .= '<td class="rating-cell' . $rating_class . '">' . esc_html( $player['rating'] ) . '</td>';
-        $output      .= '<td>' . render_faction_with_icon( $player['preferred_faction'], $plugin_dir ) . '</td>';
+        $output      .= '<td>' . rankings_render_faction( $player['preferred_faction'], $plugin_dir ) . '</td>';
         $output      .= '</tr>';
     }
     $output .= '</tbody>';
@@ -260,10 +249,10 @@ function data_display_rankings_render_callback( $attributes ) {
  * @param array $attributes Block attributes.
  * @return string HTML output for the searchable rankings.
  */
-function data_display_searchable_rankings_render_callback( $attributes ) {
+function rankings_searchable_render_callback( $attributes ) {
     $output  = '<input type="text" id="search-input" placeholder="Search for a player..." onkeyup="filterRankings()">';
     $output .= '<div id="search-results">';
-    $output .= data_display_rankings_render_callback( $attributes );
+    $output .= rankings_render_callback( $attributes );
     $output .= '</div>';
     return $output;
 }
@@ -276,7 +265,7 @@ function data_display_searchable_rankings_render_callback( $attributes ) {
  * @param array $attributes Block attributes.
  * @return string HTML output for the events table.
  */
-function data_display_events_render_callback( $attributes ) {
+function events_render_callback( $attributes ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $events     = $wpdb->get_results( "SELECT DISTINCT tournament_name, start_date FROM $table_name ORDER BY start_date DESC", ARRAY_A );
@@ -312,7 +301,7 @@ function data_display_events_render_callback( $attributes ) {
  * @param array $attributes Block attributes.
  * @return string HTML output for the faction rankings.
  */
-function faction_rankings_render_callback( $attributes ) {
+function rankings_faction_render_callback( $attributes ) {
     if ( ! isset( $_GET['faction'] ) ) {
         return '<p>Please specify a faction using the <code>?faction=[Faction Name]</code> query parameter.</p>';
     }
@@ -383,7 +372,7 @@ function faction_rankings_render_callback( $attributes ) {
  * @param array $attributes Block attributes.
  * @return string HTML output for the player profile.
  */
-function player_profile_render_callback( $attributes ) {
+function rankings_player_profile_render_callback( $attributes ) {
     global $wpdb;
 
     if ( isset( $_GET['player'] ) ) {
@@ -473,7 +462,7 @@ function player_profile_render_callback( $attributes ) {
                 if ( $faction === null ) {
                     echo '<span style="display:inline-block;width:24px;height:24px;margin:0 5px;"></span>';
                 } else {
-                    $icon_with_anchor = render_faction_with_icon( $faction, $plugin_dir );
+                    $icon_with_anchor = rankings_render_faction( $faction, $plugin_dir );
                     if ( preg_match( '/<img[^>]+>/i', $icon_with_anchor, $matches ) ) {
                         $icon_html = $matches[0];
                     } else {
@@ -628,7 +617,7 @@ function player_profile_render_callback( $attributes ) {
             echo '<table class="realms-table player-profile-stats">';
             echo '<tbody>';
             echo '<tr><td>Matches Played</td><td>' . esc_html( $player_info['matches_played'] ) . '</td></tr>';
-            echo '<tr><td>Preferred Faction</td><td>' . render_faction_with_icon( $player_info['preferred_faction'], $plugin_dir ) . '</td></tr>';
+            echo '<tr><td>Preferred Faction</td><td>' . rankings_render_faction( $player_info['preferred_faction'], $plugin_dir ) . '</td></tr>';
             echo '<tr><td>All-Time Record</td><td>' . esc_html( "$wins - $draws - $losses" ) . '</td></tr>';
             echo '<tr><td>Event Record</td><td>' . $best_record_display . '</td></tr>';
             echo '<tr><td>Best Matchup</td><td>' . $best_matchup_display . '</td></tr>';
@@ -687,7 +676,7 @@ function player_profile_render_callback( $attributes ) {
                     echo '<td>' . esc_html( $match['round'] ) . '</td>';
                     $opponent_link = '<a href="' . esc_url( add_query_arg( 'player', urlencode( $opponent ), site_url( '/player-profile/' ) ) ) . '">' . esc_html( $opponent ) . '</a>';
                     echo '<td>' . wp_kses_post( $opponent_link ) . '</td>';
-                    echo '<td>' . render_faction_with_icon( $opponent_faction, $plugin_dir ) . '</td>';
+                    echo '<td>' . rankings_render_faction( $opponent_faction, $plugin_dir ) . '</td>';
                     echo '<td>' . esc_html( $opponent_elo !== null ? $opponent_elo : 'N/A' ) . '</td>';
                     echo '<td>' . esc_html( $result ) . '</td>';
                     echo '</tr>';
@@ -730,7 +719,7 @@ function player_profile_render_callback( $attributes ) {
                     echo '<tr>';
                     echo '<td>' . esc_html( $match['round'] ) . '</td>';
                     echo '<td>' . wp_kses_post( $opponent_link ) . '</td>';
-                    echo '<td>' . render_faction_with_icon( $opponent_faction, $plugin_dir ) . '</td>';
+                    echo '<td>' . rankings_render_faction( $opponent_faction, $plugin_dir ) . '</td>';
                     echo '<td>' . esc_html( $opponent_elo !== null ? $opponent_elo : 'N/A' ) . '</td>';
                     echo '<td>' . esc_html( $result ) . '</td>';
                     echo '</tr>';
