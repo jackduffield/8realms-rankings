@@ -60,7 +60,7 @@ function rankings_create_elo_ratings_table() {
 
 
     $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL,
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
         player_name text NOT NULL,
         rating int(11) NOT NULL DEFAULT 1000,
         matches_played int(11) NOT NULL DEFAULT 0,
@@ -83,10 +83,10 @@ register_activation_hook( __FILE__, 'rankings_create_elo_ratings_table' );
  *
  * @return void
  */
-function rankings_management_enqueue_scripts() {
+function rankings_enqueue_scripts() {
     wp_enqueue_style( 'rankings-styles', plugins_url( 'style.css', __FILE__ ) );
 }
-add_action( 'wp_enqueue_scripts', 'data_management_enqueue_scripts' );
+add_action( 'wp_enqueue_scripts', 'rankings_enqueue_scripts' );
 
 //------------------------------------------------------------------------------
 // Include Main Plugin Functionality
@@ -105,7 +105,7 @@ require_once plugin_dir_path(__FILE__) . 'rankings-display.php';
 // On Uninstall
 //------------------------------------------------------------------------------
 
-// This file is loaded when the plugin is uninstalled. It removes scheduled cron events,
+// This code is loaded when the plugin is uninstalled. It removes scheduled cron events,
 // drops the custom tables, and deletes plugin-specific options.
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
@@ -116,7 +116,7 @@ function eightrealms_rankings_uninstall() {
     global $wpdb;
 
     // Clear scheduled cron events.
-    wp_clear_scheduled_hook('data_management_weekly_backup');
+    wp_clear_scheduled_hook('rankings_weekly_backup');
 
     // Drop custom tables.
     $tables = array(

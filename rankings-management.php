@@ -34,7 +34,7 @@ register_activation_hook( __FILE__, 'rankings_backup_activate' );
  *
  * @return void
  */
-function data_management_backup_deactivate() {
+function rankings_backup_deactivate() {
     wp_clear_scheduled_hook( 'rankings_weekly_backup' );
 }
 register_deactivation_hook( __FILE__, 'rankings_backup_deactivate' );
@@ -623,23 +623,23 @@ function rankings_backup_page() {
 
     // Handle backup and restore actions.
     if ( isset( $_POST['backup_elo_ratings'] ) ) {
-        data_management_backup_table( 'elo_ratings' );
+        rankings_backup_table( 'elo_ratings' );
         echo '<div class="updated"><p>Elo Ratings table backed up.</p></div>';
     }
     if ( isset( $_POST['backup_match_data'] ) ) {
-        data_management_backup_table( 'match_data' );
+        rankings_backup_table( 'match_data' );
         echo '<div class="updated"><p>Match Data table backed up.</p></div>';
     }
     if ( isset( $_POST['restore_elo_ratings'] ) ) {
-        data_management_restore_table( 'elo_ratings', $_POST['backup_file'] );
+        rankings_restore_table( 'elo_ratings', $_POST['backup_file'] );
         echo '<div class="updated"><p>Elo Ratings table restored.</p></div>';
     }
     if ( isset( $_POST['restore_match_data'] ) ) {
-        data_management_restore_table( 'match_data', $_POST['backup_file'] );
+        rankings_restore_table( 'match_data', $_POST['backup_file'] );
         echo '<div class="updated"><p>Match Data table restored.</p></div>';
     }
     if ( isset( $_POST['delete_backup'] ) ) {
-        data_management_delete_backup( $_POST['backup_file'] );
+        rankings_delete_backup( $_POST['backup_file'] );
         echo '<div class="updated"><p>Backup deleted.</p></div>';
     }
 
@@ -650,7 +650,7 @@ function rankings_backup_page() {
     echo '<input type="submit" name="backup_match_data" value="Backup Now" class="button button-primary">';
     echo '</form>';
     echo '<h3>Available Backups for Match Data</h3>';
-    data_management_list_backups( 'match_data' );
+    rankings_list_backups( 'match_data' );
 
     // Backup forms for Elo Ratings table.
     echo '<form method="post">';
@@ -659,7 +659,7 @@ function rankings_backup_page() {
     echo '<input type="submit" name="backup_elo_ratings" value="Backup Now" class="button button-primary">';
     echo '</form>';
     echo '<h3>Available Backups for Elo Ratings</h3>';
-    data_management_list_backups( 'elo_ratings' );
+    rankings_list_backups( 'elo_ratings' );
 
     // Settings for automatic backups.
     echo '<form method="post">';
@@ -674,9 +674,9 @@ function rankings_backup_page() {
         $auto_backup = isset( $_POST['auto_backup'] ) ? 'yes' : 'no';
         update_option( 'backup_manager_auto_backup', $auto_backup );
         if ( $auto_backup == 'yes' ) {
-            data_management_backup_activate();
+            rankings_backup_activate();
         } else {
-            data_management_backup_deactivate();
+            rankings_backup_deactivate();
         }
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
