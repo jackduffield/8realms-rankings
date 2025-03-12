@@ -8,13 +8,13 @@
     var ServerSideRender = components.ServerSideRender;
 
     // Register block for Player Profile
-    blocks.registerBlockType('data-display/player-profile', {
+    blocks.registerBlockType('rankings/player-profile', {
         title: 'Player Profile',
         icon: 'admin-users',
         category: 'widgets',
         edit: function() {
             return el(ServerSideRender, {
-                block: 'data-display/player-profile',
+                block: 'rankings/player-profile',
             });
         },        
         save: function() {
@@ -23,13 +23,13 @@
     });
 
     // Register block for Rankings Table
-    blocks.registerBlockType('data-display/rankings', {
+    blocks.registerBlockType('rankings/rankings', {
         title: 'Rankings Table',
         icon: 'chart-bar',
         category: 'widgets',
         edit: function() {
             return el(ServerSideRender, {
-                block: 'data-display/rankings',
+                block: 'rankings/rankings',
             });
         },
         save: function() {
@@ -38,13 +38,13 @@
     });
 
     // Register block for Searchable Rankings Table
-    blocks.registerBlockType('data-display/searchable-rankings', {
+    blocks.registerBlockType('rankings/searchable-rankings', {
         title: 'Searchable Rankings Table',
         icon: 'search',
         category: 'widgets',
         edit: function() {
             return el(ServerSideRender, {
-                block: 'data-display/searchable-rankings',
+                block: 'rankings/searchable-rankings',
             });
         },
         save: function() {
@@ -53,13 +53,13 @@
     });
 
     // Register block for Events List
-    blocks.registerBlockType('data-display/events', {
+    blocks.registerBlockType('rankings/events', {
         title: 'Events List',
         icon: 'calendar-alt',
         category: 'widgets',
         edit: function() {
             return el(ServerSideRender, {
-                block: 'data-display/events',
+                block: 'rankings/events',
             });
         },
         save: function() {
@@ -68,13 +68,13 @@
     });
 
     // Register block for Faction Rankings
-    blocks.registerBlockType('data-display/faction-rankings', {
+    blocks.registerBlockType('rankings/faction-rankings', {
         title: 'Faction Rankings',
         icon: 'awards',
         category: 'widgets',
         edit: function() {
             return el(ServerSideRender, {
-                block: 'data-display/faction-rankings',
+                block: 'rankings/faction-rankings',
             });
         },
         save: function() {

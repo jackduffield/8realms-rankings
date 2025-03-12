@@ -265,7 +265,7 @@ function rankings_searchable_render_callback( $attributes ) {
  * @param array $attributes Block attributes.
  * @return string HTML output for the events table.
  */
-function events_render_callback( $attributes ) {
+function rankings_events_render_callback( $attributes ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $events     = $wpdb->get_results( "SELECT DISTINCT tournament_name, start_date FROM $table_name ORDER BY start_date DESC", ARRAY_A );
