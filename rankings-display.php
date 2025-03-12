@@ -24,6 +24,7 @@
  *
  * @return void
  */
+
 function rankings_init() {
     wp_register_script(
         'rankings-editor-script',
@@ -51,7 +52,7 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings',
+            'style'           => 'rankings-style',
             'render_callback' => 'rankings_render_callback',
         )
     );
@@ -61,7 +62,7 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings',
+            'style'           => 'rankings-style',
             'render_callback' => 'rankings_searchable_render_callback',
         )
     );
@@ -71,7 +72,7 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings',
+            'style'           => 'rankings-style',
             'render_callback' => 'rankings_events_render_callback',
         )
     );
@@ -81,14 +82,16 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings',
+            'style'           => 'rankings-style',
             'render_callback' => 'rankings_faction_render_callback',
         )
     );
+
     register_block_type(
         'rankings/player-profile',
         array(
             'render_callback' => 'rankings_player_profile_render_callback',
+            'style'           => 'rankings-style'
         )
     );
 }
@@ -163,7 +166,7 @@ function rankings_display_enqueue_assets() {
         true
     );
     wp_enqueue_style(
-        'rankings-styles',
+        'rankings-style',
         plugins_url( 'style.css', __FILE__ )
     );
 }
@@ -180,7 +183,7 @@ function rankings_display_enqueue_editor_assets() {
     wp_enqueue_script(
         'rankings-editor-script',
         plugins_url( 'blocks.js', __FILE__ ),
-        array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data' ),
+        array( 'wp-blocks','wp-block-editor', 'wp-element', 'wp-editor', 'wp-components', 'wp-data' ),
         '1.0',
         true
     );
@@ -265,7 +268,7 @@ function rankings_searchable_render_callback( $attributes ) {
  * @param array $attributes Block attributes.
  * @return string HTML output for the events table.
  */
-function events_render_callback( $attributes ) {
+function rankings_events_render_callback( $attributes ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
     $events     = $wpdb->get_results( "SELECT DISTINCT tournament_name, start_date FROM $table_name ORDER BY start_date DESC", ARRAY_A );
@@ -375,8 +378,14 @@ function rankings_faction_render_callback( $attributes ) {
 function rankings_player_profile_render_callback( $attributes ) {
     global $wpdb;
 
-    if ( isset( $_GET['player'] ) ) {
+    // Prefer the attribute value in the editor and on the front end
+    if ( isset( $attributes['player'] ) && ! empty( $attributes['player'] ) ) {
+        $player_name = sanitize_text_field( $attributes['player'] );
+    } elseif ( isset( $_GET['player'] ) ) {
         $player_name = sanitize_text_field( $_GET['player'] );
+    }
+
+    if ( isset($player_name) ) {
         $elo_table   = $wpdb->prefix . 'elo_ratings';
         $match_table = $wpdb->prefix . 'match_data';
         $plugin_dir  = plugin_dir_url( __FILE__ ) . 'faction-icons/';

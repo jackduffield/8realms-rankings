@@ -3,87 +3,102 @@
  *
  * Necessary to register Gutenberg blocks for the tables in the plugin.
  */
-( function( blocks, element, components ) {
-    var el = element.createElement;
-    var ServerSideRender = components.ServerSideRender;
 
-    // Register block for Player Profile
-    blocks.registerBlockType('data-display/player-profile', {
-        title: 'Player Profile',
-        icon: 'admin-users',
-        category: 'widgets',
-        edit: function() {
-            return el(ServerSideRender, {
-                block: 'data-display/player-profile',
-            });
-        },        
-        save: function() {
-            return null;
-        },
-    });
+import { registerBlockType } from '@wordpress/blocks';
+import { InspectorControls, ServerSideRender } from '@wordpress/block-editor';
+import { TextControl } from '@wordpress/components';
+import { createElement } from '@wordpress/element';
 
-    // Register block for Rankings Table
-    blocks.registerBlockType('data-display/rankings', {
-        title: 'Rankings Table',
-        icon: 'chart-bar',
-        category: 'widgets',
-        edit: function() {
-            return el(ServerSideRender, {
-                block: 'data-display/rankings',
-            });
+// Register block for Player Profile
+registerBlockType('rankings/player-profile', {
+    title: 'Player Profile',
+    icon: 'admin-users',
+    category: 'widgets',
+    attributes: {
+        player: {
+            type: 'string',
+            default: 'Jack Duffield' // default player for preview/editor
         },
-        save: function() {
-            return null;
-        },
-    });
+    },
+    edit: ( props ) => {
+        const { attributes: { player }, setAttributes } = props;
 
-    // Register block for Searchable Rankings Table
-    blocks.registerBlockType('data-display/searchable-rankings', {
-        title: 'Searchable Rankings Table',
-        icon: 'search',
-        category: 'widgets',
-        edit: function() {
-            return el(ServerSideRender, {
-                block: 'data-display/searchable-rankings',
-            });
-        },
-        save: function() {
-            return null;
-        },
-    });
+        const onChangePlayer = ( newValue ) => {
+            setAttributes( { player: newValue } );
+        };
 
-    // Register block for Events List
-    blocks.registerBlockType('data-display/events', {
-        title: 'Events List',
-        icon: 'calendar-alt',
-        category: 'widgets',
-        edit: function() {
-            return el(ServerSideRender, {
-                block: 'data-display/events',
-            });
-        },
-        save: function() {
-            return null;
-        },
-    });
+        return (
+            <>
+                <InspectorControls>
+                    <div className="player-profile-settings">
+                        <TextControl
+                            label="Player Name"
+                            value={player}
+                            onChange={onChangePlayer}
+                        />
+                    </div>
+                </InspectorControls>
+                <ServerSideRender
+                    block="rankings/player-profile"
+                    attributes={props.attributes}
+                />
+            </>
+        );
+    },
+    save: () => {
+        // Server side rendering
+        return null;
+    },
+});
 
-    // Register block for Faction Rankings
-    blocks.registerBlockType('data-display/faction-rankings', {
-        title: 'Faction Rankings',
-        icon: 'awards',
-        category: 'widgets',
-        edit: function() {
-            return el(ServerSideRender, {
-                block: 'data-display/faction-rankings',
-            });
-        },
-        save: function() {
-            return null;
-        },
-    });
+// Register block for Rankings Table
+registerBlockType('rankings/rankings', {
+    title: 'Rankings Table',
+    icon: 'chart-bar',
+    category: 'widgets',
+    edit: () => {
+        return <ServerSideRender block="rankings/rankings" />;
+    },
+    save: () => {
+        return null;
+    },
+});
 
-} )(
-    window.wp.blocks,
-    window.wp.element,
-    window.wp.components
-);
+// Register block for Searchable Rankings Table
+registerBlockType('rankings/searchable-rankings', {
+    title: 'Searchable Rankings Table',
+    icon: 'search',
+    category: 'widgets',
+    edit: () => {
+        return <ServerSideRender block="rankings/searchable-rankings" />;
+    },
+    save: () => {
+        return null;
+    },
+});
+
+// Register block for Events List
+registerBlockType('rankings/events', {
+    title: 'Events List',
+    icon: 'calendar-alt',
+    category: 'widgets',
+    edit: () => {
+        return <ServerSideRender block="rankings/events" />;
+    },
+    save: () => {
+        return null;
+    },
+});
+
+// Register block for Faction Rankings
+registerBlockType('rankings/faction-rankings', {
+    title: 'Faction Rankings',
+    icon: 'awards',
+    category: 'widgets',
+    edit: () => {
+        return <ServerSideRender block="rankings/faction-rankings" />;
+    },
+    save: () => {
+        return null;
+    },
+});

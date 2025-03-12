@@ -89,6 +89,30 @@ function rankings_enqueue_scripts() {
 add_action( 'wp_enqueue_scripts', 'rankings_enqueue_scripts' );
 
 //------------------------------------------------------------------------------
+// Register Blocks
+//------------------------------------------------------------------------------
+
+/**
+ * Register custom blocks.
+ *
+ * @return void
+ */
+function rankings_register_blocks() {
+    $blocks = [
+        'player-profile',
+        'rankings',
+        'searchable-rankings',
+        'events',
+        'faction-rankings'
+    ];
+
+    foreach ($blocks as $block) {
+        register_block_type(__DIR__ . "/blocks/$block");
+    }
+}
+add_action('init', 'rankings_register_blocks');
+
+//------------------------------------------------------------------------------
 // Include Main Plugin Functionality
 //------------------------------------------------------------------------------
 
@@ -100,38 +124,5 @@ require_once plugin_dir_path(__FILE__) . 'rankings-management.php';
 
 // Include the Data Display functionality.
 require_once plugin_dir_path(__FILE__) . 'rankings-display.php';
-
-//------------------------------------------------------------------------------
-// On Uninstall
-//------------------------------------------------------------------------------
-
-// This code is loaded when the plugin is uninstalled. It removes scheduled cron events,
-// drops the custom tables, and deletes plugin-specific options.
-
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-    exit;
-}
-
-function eightrealms_rankings_uninstall() {
-    global $wpdb;
-
-    // Clear scheduled cron events.
-    wp_clear_scheduled_hook('rankings_weekly_backup');
-
-    // Drop custom tables.
-    $tables = array(
-        $wpdb->prefix . 'match_data',
-        $wpdb->prefix . 'elo_ratings'
-    );
-
-    foreach ( $tables as $table ) {
-        $wpdb->query( "DROP TABLE IF EXISTS $table" );
-    }
-
-    // Remove plugin options (if any were stored).
-    delete_option( 'backup_manager_auto_backup' );
-}
-
-register_uninstall_hook( __FILE__, 'eightrealms_rankings_uninstall' );
 
 // EOF

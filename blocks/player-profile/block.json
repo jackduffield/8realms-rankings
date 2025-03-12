@@ -1,0 +1,15 @@
+{
+    "apiVersion": 2,
+    "name": "rankings/player-profile",
+    "title": "Player Profile",
+    "category": "widgets",
+    "icon": "admin-users",
+    "attributes": {
+        "player": {
+            "type": "string",
+            "default": "Jack Duffield"
+        }
+    },
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}
