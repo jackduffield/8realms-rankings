@@ -194,6 +194,14 @@ function rankings_display_enqueue_editor_assets() {
         array( 'wp-edit-blocks' ),
         '1.0'
     );
+
+    // Enqueue the player-profile block script
+    wp_enqueue_script(
+        'rankings-player-profile',
+        plugins_url( 'dist/blocks/player-profile/index.js', __FILE__ ),
+        array( 'wp-blocks', 'wp-element', 'wp-editor' ),
+        filemtime( plugin_dir_path( __FILE__ ) . 'dist/blocks/player-profile/index.js' )
+    );
 }
 add_action( 'enqueue_block_editor_assets', 'rankings_display_enqueue_editor_assets' );
 

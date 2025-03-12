@@ -88,6 +88,21 @@ function rankings_enqueue_scripts() {
 }
 add_action( 'wp_enqueue_scripts', 'rankings_enqueue_scripts' );
 
+/**
+ * Enqueue the plugin block scripts.
+ *
+ * @return void
+ */
+function rankings_enqueue_block_scripts() {
+    wp_enqueue_script(
+        'rankings-blocks',
+        plugins_url('dist/blocks/player-profile/index.js', __FILE__),
+        ['wp-blocks', 'wp-element', 'wp-editor'],
+        filemtime(plugin_dir_path(__FILE__) . 'dist/blocks/player-profile/index.js')
+    );
+}
+add_action('enqueue_block_editor_assets', 'rankings_enqueue_block_scripts');
+
 //------------------------------------------------------------------------------
 // Register Blocks
 //------------------------------------------------------------------------------

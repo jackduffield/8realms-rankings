@@ -9,6 +9,8 @@ import { InspectorControls, ServerSideRender } from '@wordpress/block-editor';
 import { TextControl } from '@wordpress/components';
 import { createElement } from '@wordpress/element';
 
+import './blocks/player-profile/index.js';
+
 // Register block for Player Profile
 registerBlockType('rankings/player-profile', {
     title: 'Player Profile',

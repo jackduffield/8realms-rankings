@@ -2,12 +2,12 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        'blocks/player-profile/index': './blocks/player-profile/index.js',
-        // Add other blocks here
+        'blocks/player-profile/index': './blocks/player-profile/index.js'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
+        libraryTarget: 'this'
     },
     module: {
         rules: [
@@ -17,16 +17,14 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-env', '@babel/preset-react'],
-                    },
-                },
-            },
-        ],
+                        presets: ['@babel/preset-env', '@babel/preset-react']
+                    }
+                }
+            }
+        ]
     },
     externals: {
-        '@wordpress/blocks': ['wp', 'blocks'],
-        '@wordpress/block-editor': ['wp', 'blockEditor'],
-        '@wordpress/components': ['wp', 'components'],
-        '@wordpress/element': ['wp', 'element'],
-    },
+        'react': 'React',
+        'react-dom': 'ReactDOM'
+    }
 };
