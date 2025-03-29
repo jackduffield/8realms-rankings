@@ -117,7 +117,7 @@ function rankings_render_faction( $faction, $plugin_dir ) {
     }
 
     $svg_file = sanitize_title( $faction ) . '.svg';
-    $svg_path = $plugin_dir . $svg_file;
+    $svg_path = $plugin_dir . 'img/faction-icons/' . $svg_file; // Updated path
 
     $svg_real_path = str_replace(
         wp_normalize_path( WP_CONTENT_URL ),
@@ -126,7 +126,7 @@ function rankings_render_faction( $faction, $plugin_dir ) {
     );
 
     if ( file_exists( $svg_real_path ) ) {
-        $svg = '<img src="' . esc_url( plugins_url( 'faction-icons/' . $svg_file, __FILE__ ) ) . '" alt="' . esc_attr( $faction ) . '" class="realms-faction-icon"> ';
+        $svg = '<img src="' . esc_url( plugins_url( 'img/faction-icons/' . $svg_file, __FILE__ ) ) . '" alt="' . esc_attr( $faction ) . '" class="realms-faction-icon"> '; // Updated path
 
         $parts      = preg_split( '/\s+/', $faction, 2 );
         $first_word = $parts[0];
@@ -215,7 +215,7 @@ function rankings_render_callback( $attributes ) {
         return '<p>No rankings available.</p>';
     }
 
-    $plugin_dir = plugin_dir_url( __FILE__ ) . 'faction-icons/';
+    $plugin_dir = plugin_dir_url( __FILE__ ) . 'img/faction-icons/'; // Updated path
 
     $output  = '<table class="realms-table rankings-table">';
     $output .= '<thead>';
@@ -319,10 +319,10 @@ function rankings_faction_render_callback( $attributes ) {
         return '<p>No rankings available for this faction.</p>';
     }
 
-    $plugin_icon_url = plugins_url( 'faction-icons-large/', __FILE__ );
+    $plugin_icon_url = plugins_url( 'img/faction-icons-large/', __FILE__ ); // Updated path
     $svg_file        = sanitize_title( $faction ) . '.svg';
     $svg_url         = $plugin_icon_url . $svg_file;
-    $svg_path        = plugin_dir_path( __FILE__ ) . 'faction-icons-large/' . $svg_file;
+    $svg_path        = plugin_dir_path( __FILE__ ) . 'img/faction-icons-large/' . $svg_file; // Updated path
 
     if ( file_exists( $svg_path ) ) {
         $faction_icon = '<img src="' . esc_url( $svg_url ) . '" alt="' . esc_attr( $faction ) . '" class="realms-faction-icon-large">';
@@ -379,7 +379,7 @@ function rankings_player_profile_render_callback( $attributes ) {
         $player_name = sanitize_text_field( $_GET['player'] );
         $elo_table   = $wpdb->prefix . 'elo_ratings';
         $match_table = $wpdb->prefix . 'match_data';
-        $plugin_dir  = plugin_dir_url( __FILE__ ) . 'faction-icons/';
+        $plugin_dir  = plugin_dir_url( __FILE__ ) . 'img/faction-icons/'; // Updated path
 
         $player_info = $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM $elo_table WHERE player_name = %s", $player_name ),
