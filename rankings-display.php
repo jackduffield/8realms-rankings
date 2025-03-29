@@ -24,7 +24,6 @@
  *
  * @return void
  */
-
 function rankings_init() {
     wp_register_script(
         'rankings-editor-script',
@@ -52,7 +51,7 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings-style',
+            'style'           => 'rankings',
             'render_callback' => 'rankings_render_callback',
         )
     );
@@ -62,7 +61,7 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings-style',
+            'style'           => 'rankings',
             'render_callback' => 'rankings_searchable_render_callback',
         )
     );
@@ -72,7 +71,7 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings-style',
+            'style'           => 'rankings',
             'render_callback' => 'rankings_events_render_callback',
         )
     );
@@ -82,16 +81,14 @@ function rankings_init() {
         array(
             'editor_script'   => 'rankings-editor-script',
             'editor_style'    => 'rankings-editor-style',
-            'style'           => 'rankings-style',
+            'style'           => 'rankings',
             'render_callback' => 'rankings_faction_render_callback',
         )
     );
-
     register_block_type(
         'rankings/player-profile',
         array(
             'render_callback' => 'rankings_player_profile_render_callback',
-            'style'           => 'rankings-style'
         )
     );
 }
@@ -120,7 +117,7 @@ function rankings_render_faction( $faction, $plugin_dir ) {
     }
 
     $svg_file = sanitize_title( $faction ) . '.svg';
-    $svg_path = $plugin_dir . $svg_file;
+    $svg_path = $plugin_dir . 'img/faction-icons/' . $svg_file; // Updated path
 
     $svg_real_path = str_replace(
         wp_normalize_path( WP_CONTENT_URL ),
@@ -129,7 +126,7 @@ function rankings_render_faction( $faction, $plugin_dir ) {
     );
 
     if ( file_exists( $svg_real_path ) ) {
-        $svg = '<img src="' . esc_url( plugins_url( 'faction-icons/' . $svg_file, __FILE__ ) ) . '" alt="' . esc_attr( $faction ) . '" class="realms-faction-icon"> ';
+        $svg = '<img src="' . esc_url( plugins_url( 'img/faction-icons/' . $svg_file, __FILE__ ) ) . '" alt="' . esc_attr( $faction ) . '" class="realms-faction-icon"> '; // Updated path
 
         $parts      = preg_split( '/\s+/', $faction, 2 );
         $first_word = $parts[0];
@@ -166,7 +163,7 @@ function rankings_display_enqueue_assets() {
         true
     );
     wp_enqueue_style(
-        'rankings-style',
+        'rankings-styles',
         plugins_url( 'style.css', __FILE__ )
     );
 }
@@ -183,7 +180,7 @@ function rankings_display_enqueue_editor_assets() {
     wp_enqueue_script(
         'rankings-editor-script',
         plugins_url( 'blocks.js', __FILE__ ),
-        array( 'wp-blocks','wp-block-editor', 'wp-element', 'wp-editor', 'wp-components', 'wp-data' ),
+        array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data' ),
         '1.0',
         true
     );
@@ -193,14 +190,6 @@ function rankings_display_enqueue_editor_assets() {
         plugins_url( 'editor.css', __FILE__ ),
         array( 'wp-edit-blocks' ),
         '1.0'
-    );
-
-    // Enqueue the player-profile block script
-    wp_enqueue_script(
-        'rankings-player-profile',
-        plugins_url( 'dist/blocks/player-profile/index.js', __FILE__ ),
-        array( 'wp-blocks', 'wp-element', 'wp-editor' ),
-        filemtime( plugin_dir_path( __FILE__ ) . 'dist/blocks/player-profile/index.js' )
     );
 }
 add_action( 'enqueue_block_editor_assets', 'rankings_display_enqueue_editor_assets' );
@@ -226,7 +215,7 @@ function rankings_render_callback( $attributes ) {
         return '<p>No rankings available.</p>';
     }
 
-    $plugin_dir = plugin_dir_url( __FILE__ ) . 'faction-icons/';
+    $plugin_dir = plugin_dir_url( __FILE__ ) . 'img/faction-icons/'; // Updated path
 
     $output  = '<table class="realms-table rankings-table">';
     $output .= '<thead>';
@@ -330,10 +319,10 @@ function rankings_faction_render_callback( $attributes ) {
         return '<p>No rankings available for this faction.</p>';
     }
 
-    $plugin_icon_url = plugins_url( 'faction-icons-large/', __FILE__ );
+    $plugin_icon_url = plugins_url( 'img/faction-icons-large/', __FILE__ ); // Updated path
     $svg_file        = sanitize_title( $faction ) . '.svg';
     $svg_url         = $plugin_icon_url . $svg_file;
-    $svg_path        = plugin_dir_path( __FILE__ ) . 'faction-icons-large/' . $svg_file;
+    $svg_path        = plugin_dir_path( __FILE__ ) . 'img/faction-icons-large/' . $svg_file; // Updated path
 
     if ( file_exists( $svg_path ) ) {
         $faction_icon = '<img src="' . esc_url( $svg_url ) . '" alt="' . esc_attr( $faction ) . '" class="realms-faction-icon-large">';
@@ -386,17 +375,11 @@ function rankings_faction_render_callback( $attributes ) {
 function rankings_player_profile_render_callback( $attributes ) {
     global $wpdb;
 
-    // Prefer the attribute value in the editor and on the front end
-    if ( isset( $attributes['player'] ) && ! empty( $attributes['player'] ) ) {
-        $player_name = sanitize_text_field( $attributes['player'] );
-    } elseif ( isset( $_GET['player'] ) ) {
+    if ( isset( $_GET['player'] ) ) {
         $player_name = sanitize_text_field( $_GET['player'] );
-    }
-
-    if ( isset($player_name) ) {
         $elo_table   = $wpdb->prefix . 'elo_ratings';
         $match_table = $wpdb->prefix . 'match_data';
-        $plugin_dir  = plugin_dir_url( __FILE__ ) . 'faction-icons/';
+        $plugin_dir  = plugin_dir_url( __FILE__ ) . 'img/faction-icons/'; // Updated path
 
         $player_info = $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM $elo_table WHERE player_name = %s", $player_name ),

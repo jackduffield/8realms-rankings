@@ -160,7 +160,7 @@ function rankings_list_backups( $table ) {
  *
  * @return void
  */
-function rankings_manage_page() {
+function rankings_page() {
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
@@ -591,8 +591,8 @@ function rankings_show_search_results( $search_params ) {
  * @return void
  */
 function manage_rankings_menu() {
-    add_menu_page( 'Manage Rankings', 'Manage Rankings', 'edit_others_posts', 'rankings-management', 'rankings_manage_page' );
-    add_submenu_page( 'rankings-management', 'Manage Data', 'Manage Data', 'edit_others_posts', 'data-manager', 'rankings_manage_page' );
+    add_menu_page( 'Manage Rankings', 'Manage Rankings', 'edit_others_posts', 'rankings-management', 'rankings_page' );
+    add_submenu_page( 'rankings-management', 'Manage Data', 'Manage Data', 'edit_others_posts', 'data-manager', 'rankings_page' );
     add_submenu_page( 'rankings-management', 'Search Data', 'Search Data', 'edit_others_posts', 'search-data', 'rankings_search_page' );
     add_submenu_page( 'rankings-management', 'Manage Backups', 'Manage Backups', 'edit_others_posts', 'backup-manager', 'rankings_backup_page' );
     remove_submenu_page( 'rankings-management', 'rankings-management' );
