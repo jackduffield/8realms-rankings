@@ -1,12 +1,5 @@
 <?php
 
-function register_player_profile_block() {
-    register_block_type( __DIR__, array(
-        'render_callback' => 'rankings_player_profile_render_callback',
-    ) );
-}
-add_action( 'init', 'register_player_profile_block' );
-
 /**
  * Render the Player Profile block.
  *

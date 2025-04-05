@@ -16,7 +16,7 @@ import ServerSideRender from '@wordpress/server-side-render';
  *
  * @return {Element} Element to render.
  */
-export default function Edit() {
+export default function Edit( { attributes } ) {
 	return (
 		<ServerSideRender
 				block="rankings/searchable-rankings-table"

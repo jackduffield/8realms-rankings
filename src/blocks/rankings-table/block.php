@@ -1,12 +1,5 @@
 <?php
 
-function register_rankings_block() {
-    register_block_type( __DIR__, array(
-        'render_callback' => 'rankings_table_render_callback',
-    ) );
-}
-add_action( 'init', 'register_rankings_block' );
-
 /**
  * Render the Rankings Table block.
  *

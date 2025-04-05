@@ -5,7 +5,6 @@
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
  */
 import { useBlockProps } from '@wordpress/block-editor';
-
 import ServerSideRender from '@wordpress/server-side-render';
 
 /**
@@ -16,7 +15,7 @@ import ServerSideRender from '@wordpress/server-side-render';
  *
  * @return {Element} Element to render.
  */
-export default function Edit() {
+export default function Edit( { attributes } ) {
 	return (
 		<ServerSideRender
 				block="rankings/faction-rankings-table"
