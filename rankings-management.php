@@ -62,9 +62,17 @@ function rankings_backup_table( $table ) {
     global $wpdb;
     $table_name = $wpdb->prefix . $table;
     $backup_dir = plugin_dir_path( __FILE__ ) . 'backups/';
-    if ( ! is_dir( $backup_dir ) ) {
-        mkdir( $backup_dir, 0755, true );
+
+    if ( ! is_dir( $backup_dir ) && ! mkdir( $backup_dir, 0755, true ) ) {
+        error_log( 'Failed to create backup directory: ' . $backup_dir ); // Log error
+        return;
     }
+
+    if ( ! is_writable( $backup_dir ) ) {
+        error_log( 'Backup directory is not writable: ' . $backup_dir ); // Log error
+        return;
+    }
+
     $backup_file = $backup_dir . $table . '_' . date( 'Ymd_His' ) . '.csv';
 
     $results = $wpdb->get_results( "SELECT * FROM $table_name", ARRAY_A );

@@ -24,7 +24,7 @@
  */
 function rankings_ingest_menu() {
     // Main menu page.
-    add_menu_page( 'Ingest Rankings', 'Ingest Rankings', 'edit_others_posts', 'rankings-ingest', 'rankings_ingest_bcp_page' );
+    add_menu_page( 'Ingest Match Data', 'Ingest Match Data', 'edit_others_posts', 'rankings-ingest', 'rankings_ingest_bcp_page' );
 
     // Submenu page for Ingest BCP Data.
     add_submenu_page( 'rankings-ingest', 'Ingest From BCP', 'Ingest From BCP', 'edit_others_posts', 'bcp-parser', 'rankings_ingest_bcp_page' );
@@ -33,7 +33,7 @@ function rankings_ingest_menu() {
     add_submenu_page( 'rankings-ingest', 'Ingest From SNL', 'Ingest From SNL', 'edit_others_posts', 'rankings-parser', 'rankings_ingest_snl_page' );
 
     // Remove the duplicate submenu for the top-level menu.
-    remove_submenu_page( 'rankings-ingest', 'data-ingest' );
+    remove_submenu_page( 'rankings-ingest', 'rankings-ingest' );
 }
 add_action( 'admin_menu', 'rankings_ingest_menu' );
 
@@ -60,7 +60,7 @@ function rankings_parse_bcp_data( $tournament_name, $start_date, $rounds ) {
 
     // Process each round.
     foreach ( $rounds as $round_number => $round_text ) {
-        $lines         = preg_split( '/\r\n|\r|\n/', $round_text );
+        $lines = array_map( 'sanitize_text_field', preg_split( '/\r\n|\r|\n/', $round_text ) ); // Added sanitization
         $current_match = array();
 
         // Process each line.
@@ -101,7 +101,8 @@ function rankings_parse_bcp_data( $tournament_name, $start_date, $rounds ) {
                     );
 
                     if ( $result === false ) {
-                        throw new Exception( 'Error inserting match data: ' . $wpdb->last_error );
+                        error_log( 'Database insert error: ' . $wpdb->last_error ); // Log error
+                        throw new Exception( 'Error inserting match data.' );
                     } else {
                         $data[] = array(
                             'Tournament Name'  => $tournament_name,
@@ -119,7 +120,8 @@ function rankings_parse_bcp_data( $tournament_name, $start_date, $rounds ) {
                     }
                     $current_match = array();
                 } catch ( Exception $e ) {
-                    throw new Exception( 'Error processing match: ' . htmlspecialchars( json_encode( $current_match ) ) . ' - ' . $e->getMessage() );
+                    error_log( 'Error processing match: ' . json_encode( $current_match ) . ' - ' . $e->getMessage() ); // Log error
+                    throw $e;
                 }
             }
         }

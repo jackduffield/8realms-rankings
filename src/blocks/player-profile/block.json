@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rankings/player-profile",
+	"version": "0.1.0",
+	"title": "Player Profile",
+	"category": "widgets",
+	"icon": "admin-users",
+	"description": "Displays the player profile passed as a URL parameter.",
+	"example": {},
+	"supports": {
+		"html": false
+	},
+	"textdomain": "rankings",
+	"editorScript": "file:./index.js",
+	"render": "rankings_player_profile_render_callback",
+	"viewScript": "file:./view.js"
+}

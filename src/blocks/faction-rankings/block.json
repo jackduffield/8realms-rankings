@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "rankings/faction-rankings-table",
+	"version": "0.1.0",
+	"title": "Faction Rankings Table",
+	"category": "widgets",
+	"icon": "chart-bar",
+	"description": "Displays faction rankings passed as a URL parameter.",
+	"example": {},
+	"supports": {
+		"html": false
+	},
+	"textdomain": "rankings",
+	"editorScript": "file:./index.js",
+	"render": "rankings_faction_table_render_callback",
+	"viewScript": "file:./view.js"
+}
