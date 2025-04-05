@@ -16,7 +16,6 @@ return array(
 		'supports' => array(
 			'html' => false
 		),
-		'textdomain' => 'rankings',
 		'editorScript' => 'file:./index.js',
 		'render' => 'rankings_faction_table_render_callback',
 		'viewScript' => 'file:./view.js'
@@ -36,7 +35,6 @@ return array(
 		'supports' => array(
 			'html' => false
 		),
-		'textdomain' => 'rankings',
 		'editorScript' => 'file:./index.js',
 		'render' => 'rankings_player_profile_render_callback',
 		'viewScript' => 'file:./view.js'
@@ -56,7 +54,6 @@ return array(
 		'supports' => array(
 			'html' => false
 		),
-		'textdomain' => 'rankings',
 		'editorScript' => 'file:./index.js',
 		'render' => 'rankings_table_render_callback',
 		'viewScript' => 'file:./view.js'
@@ -64,7 +61,7 @@ return array(
 	'searchable-rankings-table' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 2,
-		'name' => 'rankings/rankings-table-searchable',
+		'name' => 'rankings/searchable-rankings-table',
 		'version' => '0.1.0',
 		'title' => 'Searchable Rankings Table',
 		'category' => 'widgets',
@@ -76,7 +73,6 @@ return array(
 		'supports' => array(
 			'html' => false
 		),
-		'textdomain' => 'rankings',
 		'editorScript' => 'file:./index.js',
 		'render' => 'rankings_table_searchable_render_callback',
 		'viewScript' => 'file:./view.js'

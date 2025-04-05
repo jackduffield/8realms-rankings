@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 2,
-  "name": "rankings/rankings-table-searchable",
+  "name": "rankings/searchable-rankings-table",
   "version": "0.1.0",
   "title": "Searchable Rankings Table",
   "category": "widgets",
@@ -11,7 +11,6 @@
   "supports": {
     "html": false
   },
-  "textdomain": "rankings",
   "editorScript": "file:./index.js",
   "render": "rankings_table_searchable_render_callback",
   "viewScript": "file:./view.js"

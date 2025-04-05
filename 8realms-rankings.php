@@ -152,7 +152,9 @@ function create_block_rankings_block_init() {
 	 */
 	$manifest_data = require __DIR__ . '/build/blocks-manifest.php';
 	foreach ( array_keys( $manifest_data ) as $block_type ) {
-		register_block_type( __DIR__ . "/build/{$block_type}" );
+		register_block_type( __DIR__ . "/build/{$block_type}", [
+			'name' => $manifest_data[$block_type]['name'] // Use the correct namespace-prefixed name
+		] );
 	}
 }
 add_action( 'init', 'create_block_rankings_block_init' );

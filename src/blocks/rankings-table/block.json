@@ -11,7 +11,6 @@
 	"supports": {
 		"html": false
 	},
-	"textdomain": "rankings",
 	"editorScript": "file:./index.js",
 	"render": "rankings_table_render_callback",
 	"viewScript": "file:./view.js"

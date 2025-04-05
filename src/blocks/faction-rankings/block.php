@@ -2,7 +2,7 @@
 
 function register_faction_rankings_block() {
     register_block_type( __DIR__, array(
-        'render_callback' => 'rankings_render_callback',
+        'render_callback' => 'rankings_faction_table_render_callback',
     ) );
 }
 add_action( 'init', 'register_faction_rankings_block' );
