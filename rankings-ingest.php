@@ -30,7 +30,10 @@ function rankings_ingest_menu() {
     add_submenu_page( 'rankings-ingest', 'Ingest From BCP', 'Ingest From BCP', 'edit_others_posts', 'bcp-parser', 'rankings_ingest_bcp_page' );
 
     // Submenu page for Ingest SNL Data.
-    add_submenu_page( 'rankings-ingest', 'Ingest From SNL', 'Ingest From SNL', 'edit_others_posts', 'rankings-parser', 'rankings_ingest_snl_page' );
+    add_submenu_page( 'rankings-ingest', 'Ingest From SNL', 'Ingest From SNL', 'edit_others_posts', 'snl-parser', 'rankings_ingest_snl_page' );
+
+    // Submenu page for Ingest Milarki Data.
+    add_submenu_page( 'rankings-ingest', 'Ingest From Milarki', 'Ingest From Milarki', 'edit_others_posts', 'milarki-parser', 'rankings_ingest_milarki_page' );
 
     // Remove the duplicate submenu for the top-level menu.
     remove_submenu_page( 'rankings-ingest', 'data-ingest' );
@@ -294,6 +297,132 @@ function rankings_show_snl_parsed_data( $data ) {
     echo '</tbody></table>';
 }
 
+
+
+/**
+ * Parse Milarki data and insert into the match_data table.
+ */
+
+// Core parsing logic
+function rankings_parse_milarki_data($tournament_name, $start_date, $rounds) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'match_data';
+
+    // Known AoS faction names (sorted longest→shortest for greedy matching)
+    $factions = [
+        'Soulblight Gravelords','Stormcast Eternals','Ossiarch Bonereapers',
+        'Disciples Of Tzeentch','Slaves To Darkness','Flesh Eater Courts',
+        'Maggotkin Of Nurgle','Lumineth Realm Lords','Cities Of Sigmar',
+        'Beasts Of Chaos','Flesh Eater Courts','Sylvaneth','Seraphon',
+        'Skaven','Kruleboyz','Sons Of Behemat','Daughters Of Khaine',
+        'Hedonites Of Slaanesh','Blades Of Khorne','Fyreslayers'
+    ];
+    usort($factions, function($a,$b){ return strlen($b) - strlen($a); });
+
+    $parsed = [];
+
+    foreach ($rounds as $round_index => $round_text) {
+        $lines = preg_split('/\r\n|\r|\n/', $round_text);
+        $i = 0;
+        while ($i < count($lines)) {
+            $line = trim($lines[$i]);
+            if (preg_match('/^Table\s*(\d+)/i', $line, $m)) {
+                $table_number = intval($m[1]);
+                // Player 1
+                $i++; $p1_raw = trim($lines[$i] ?? '');
+                // Score
+                $i++; $score = trim($lines[$i] ?? '');
+                // Player 2
+                $i++; $p2_raw = trim($lines[$i] ?? '');
+                // Skip the next two lines ("To the Battle", "Finished")
+                $i += 2;
+
+                // Split name/faction
+                list($p1_name, $p1_faction) = rankings_split_milarki_name_faction($p1_raw, $factions);
+                list($p2_name, $p2_faction) = rankings_split_milarki_name_faction($p2_raw, $factions);
+
+                // Determine outcomes
+                list($s1, $s2) = array_map('intval', explode('-', $score));
+                if ($s1 > $s2) {
+                    $o1 = 'Win'; $o2 = 'Loss';
+                } elseif ($s1 < $s2) {
+                    $o1 = 'Loss'; $o2 = 'Win';
+                } else {
+                    $o1 = $o2 = 'Draw';
+                }
+
+                // Insert into database
+                $wpdb->insert($table_name, [
+                    'tournament_name'  => $tournament_name,
+                    'start_date'       => $start_date,
+                    'round'            => $round_index + 1,
+                    'table_number'     => $table_number,
+                    'player_1_name'    => $p1_name,
+                    'player_1_faction' => $p1_faction,
+                    'player_1_outcome' => $o1,
+                    'player_2_name'    => $p2_name,
+                    'player_2_faction' => $p2_faction,
+                    'player_2_outcome' => $o2,
+                    'source'           => 'Milarki'
+                ]);
+
+                // Prepare for display
+                $parsed[] = [
+                    'Tournament Name'   => $tournament_name,
+                    'Start Date'        => $start_date,
+                    'Round'             => $round_index + 1,
+                    'Table Number'      => $table_number,
+                    'Player 1 Name'     => $p1_name,
+                    'Player 1 Faction'  => $p1_faction,
+                    'Player 1 Outcome'  => $o1,
+                    'Player 2 Name'     => $p2_name,
+                    'Player 2 Faction'  => $p2_faction,
+                    'Player 2 Outcome'  => $o2,
+                    'Source'            => 'Milarki'
+                ];
+            } else {
+                // Not the start of a match—move on
+                $i++;
+            }
+        }
+    }
+
+    return $parsed;
+}
+
+// Helper: split a raw “[Name][Faction]” string
+function rankings_split_milarki_name_faction($raw, $factions) {
+    foreach ($factions as $f) {
+        if (strcasecmp(substr($raw, -strlen($f)), $f) === 0) {
+            $name = trim(substr($raw, 0, strlen($raw) - strlen($f)));
+            return [ $name, $f ];
+        }
+    }
+    throw new Exception("Could not parse name/faction from “{$raw}”");
+}
+
+// Display parsed data in a table
+function rankings_show_milarki_parsed_data($data) {
+    if (empty($data)) {
+        echo '<p>No data parsed.</p>';
+        return;
+    }
+    echo '<table class="widefat fixed" cellspacing="0">';
+    echo '<thead><tr>';
+    foreach (array_keys($data[0]) as $col) {
+        echo '<th>' . esc_html($col) . '</th>';
+    }
+    echo '</tr></thead><tbody>';
+    foreach ($data as $row) {
+        echo '<tr>';
+        foreach ($row as $cell) {
+            echo '<td>' . esc_html($cell) . '</td>';
+        }
+        echo '</tr>';
+    }
+    echo '</tbody></table>';
+}
+
 //------------------------------------------------------------------------------
 // Backend Pages for Data Ingest
 //------------------------------------------------------------------------------
@@ -427,6 +556,70 @@ function rankings_ingest_snl_page() {
                 <input type="submit" class="button-primary" value="Parse SNL Data"/>
             </p>
         </form>
+    </div>
+    <?php
+}
+
+/**
+ * Render the Milarki Parser backend page.
+ *
+ */
+
+// Display the parser page
+function rankings_ingest_milarki_page() {
+    if ( ! current_user_can('edit_others_posts') ) {
+        wp_die(__('You do not have sufficient permissions to access this page.'));
+    }
+
+    // Handle form submission
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $tournament_name = sanitize_text_field($_POST['tournament_name']);
+        $start_date      = sanitize_text_field($_POST['start_date']);
+        $rounds          = [];
+        for ($i = 1; $i <= 5; $i++) {
+            if (! empty($_POST["round_$i"])) {
+                $rounds[] = sanitize_textarea_field($_POST["round_$i"]);
+            }
+        }
+
+        if (count($rounds) < 1 || count($rounds) > 5) {
+            echo '<div class="error"><p>Please provide between 1 and 5 rounds of data.</p></div>';
+        } else {
+            try {
+                $data = rankings_parse_milarki_data($tournament_name, $start_date, $rounds);
+                echo '<div class="updated"><p>Data parsed and stored successfully!</p></div>';
+                rankings_show_milarki_parsed_data($data);
+            } catch (Exception $e) {
+                echo '<div class="error"><p>' . esc_html($e->getMessage()) . '</p></div>';
+            }
+        }
+    }
+
+    // Render the input form
+    ?>
+    <div class="wrap">
+      <h1>Milarki Parser</h1>
+      <form method="post">
+        <table class="form-table">
+          <tr>
+            <th scope="row">Tournament Name</th>
+            <td><input type="text" name="tournament_name" required style="width:100%"></td>
+          </tr>
+          <tr>
+            <th scope="row">Start Date</th>
+            <td><input type="date" name="start_date" required></td>
+          </tr>
+          <?php for ($i = 1; $i <= 5; $i++): ?>
+            <tr>
+              <th scope="row">Round <?php echo $i; ?></th>
+              <td><textarea name="round_<?php echo $i; ?>" rows="6" style="width:100%;"></textarea></td>
+            </tr>
+          <?php endfor; ?>
+        </table>
+        <p class="submit">
+          <input type="submit" class="button button-primary" value="Parse Milarki Data">
+        </p>
+      </form>
     </div>
     <?php
 }
