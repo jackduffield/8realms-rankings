@@ -667,7 +667,11 @@ function rankings_ingest_milarki_page() {
     // Render the input form
     ?>
     <div class="wrap">
-      <h1>Milarki Parser</h1>
+      <h1>Ingest Milarki Data</h1>
+        <p>This form will parse plaintext from Milarki and ingest it into <code>match_data</code>.
+        To use this form, enter the event name and the start date, and then copy each round's results
+        from the Milarki website into the corresponding box. Make sure to only copy from the first table
+        number to the bottom "Finished" or "Victory Points" text on the last pairing.</p>
       <form method="post">
         <table class="form-table">
           <tr>
