@@ -36,7 +36,7 @@ function rankings_ingest_menu() {
     add_submenu_page( 'rankings-ingest', 'Ingest From Milarki', 'Ingest From Milarki', 'edit_others_posts', 'milarki-parser', 'rankings_ingest_milarki_page' );
 
     // Remove the duplicate submenu for the top-level menu.
-    remove_submenu_page( 'rankings-ingest', 'data-ingest' );
+    remove_submenu_page( 'rankings-ingest', 'rankings-ingest' );
 }
 add_action( 'admin_menu', 'rankings_ingest_menu' );
 
@@ -315,9 +315,27 @@ function rankings_parse_milarki_data($tournament_name, $start_date, $rounds) {
         'Maggotkin Of Nurgle','Lumineth Realm Lords','Cities Of Sigmar',
         'Beasts Of Chaos','Flesh Eater Courts','Sylvaneth','Seraphon',
         'Skaven','Kruleboyz','Sons Of Behemat','Daughters Of Khaine',
-        'Hedonites Of Slaanesh','Blades Of Khorne','Fyreslayers'
+        'Hedonites Of Slaanesh','Blades Of Khorne','Fyreslayers',
+        'Kharadron Overlords','Gloomspite Gitz','Ogor Mawtribes',
+        'Idoneth Deepkin','Nighthaunt','Ironjawz','Ironjaws', 'Orruk Warclans'
     ];
-    usort($factions, function($a,$b){ return strlen($b) - strlen($a); });
+    usort($factions, function($a, $b) { return strlen($b) - strlen($a); });
+
+    // Mapping of raw faction names to canonical names
+    $faction_corrections = [
+        'Beasts Of Chaos' => 'Beasts of Chaos',
+        'Blades Of Khorne' => 'Blades of Khorne',
+        'Disciples Of Tzeentch' => 'Disciples of Tzeentch',
+        'Hedonites Of Slaanesh' => 'Hedonites of Slaanesh',
+        'Maggotkin Of Nurgle' => 'Maggotkin of Nurgle',
+        'Slaves To Darkness' => 'Slaves to Darkness',
+        'Flesh Eater Courts' => 'Flesh-eater Courts',
+        'Sons Of Behemat' => 'Sons of Behemat',
+        'Cities Of Sigmar' => 'Cities of Sigmar',
+        'Daughters Of Khaine' => 'Daughters of Khaine',
+        'Lumineth Realm Lords' => 'Lumineth Realm-Lords',
+        'Ironjaws' => 'Ironjawz'
+    ];
 
     $parsed = [];
 
@@ -326,31 +344,81 @@ function rankings_parse_milarki_data($tournament_name, $start_date, $rounds) {
         $i = 0;
         while ($i < count($lines)) {
             $line = trim($lines[$i]);
+    
+            // Skip rows with only two uppercase letters (initials)
+            if (preg_match('/^[A-Z]{2}$/', $line)) {
+                $i++;
+                continue;
+            }
+    
+            // Skip rows with "Victory Points"
+            if (stripos($line, 'Victory Points') !== false) {
+                $i++;
+                continue;
+            }
+    
+            // Skip rows with "Dropped"
+            if (stripos($line, 'Dropped') !== false) {
+                $i++;
+                continue;
+            }
+    
+            // Match table number and start parsing a match
             if (preg_match('/^Table\s*(\d+)/i', $line, $m)) {
                 $table_number = intval($m[1]);
+    
                 // Player 1
-                $i++; $p1_raw = trim($lines[$i] ?? '');
+                $i++;
+                while (isset($lines[$i]) && (preg_match('/^[A-Z]{2}$/', trim($lines[$i])) || stripos($lines[$i], 'Dropped') !== false)) {
+                    $i++; // Skip initials row or "Dropped" line if present
+                }
+                $p1_raw = trim($lines[$i] ?? '');
+                $i++;
+                // Skip lines containing the word Dropped
+                if (stripos($lines[$i], 'Dropped') !== false) {
+                    $i++;
+                }
+
                 // Score
-                $i++; $score = trim($lines[$i] ?? '');
+                $score = trim($lines[$i] ?? '');
+                if (!preg_match('/^\d+-\d+$/', $score)) {
+                    throw new Exception("Invalid score format: '{$score}'");
+                }
+    
                 // Player 2
-                $i++; $p2_raw = trim($lines[$i] ?? '');
+                $i++;
+                while (isset($lines[$i]) && (preg_match('/^[A-Z]{2}$/', trim($lines[$i])) || stripos($lines[$i], 'Dropped') !== false)) {
+                    $i++; // Skip initials row or "Dropped" line if present
+                }
+                $p2_raw = trim($lines[$i] ?? '');
+    
+                // Skip lines containing the word Dropped
+                if (stripos($lines[$i], 'Dropped') !== false) {
+                    $i++;
+                }
+                
                 // Skip the next two lines ("To the Battle", "Finished")
                 $i += 2;
-
+    
+                // Remove brackets and content inside from player names
+                $p1_raw = preg_replace('/\s*\(.*?\)/', '', $p1_raw); // Remove round brackets
+                $p1_raw = preg_replace('/\s*\[.*?\]/', '', $p1_raw); // Remove square brackets
+                $p2_raw = preg_replace('/\s*\(.*?\)/', '', $p2_raw); // Remove round brackets
+                $p2_raw = preg_replace('/\s*\[.*?\]/', '', $p2_raw); // Remove square brackets
+    
                 // Split name/faction
                 list($p1_name, $p1_faction) = rankings_split_milarki_name_faction($p1_raw, $factions);
                 list($p2_name, $p2_faction) = rankings_split_milarki_name_faction($p2_raw, $factions);
-
+    
+                // Correct faction names to canonical format
+                $p1_faction = $faction_corrections[$p1_faction] ?? $p1_faction;
+                $p2_faction = $faction_corrections[$p2_faction] ?? $p2_faction;
+    
                 // Determine outcomes
                 list($s1, $s2) = array_map('intval', explode('-', $score));
-                if ($s1 > $s2) {
-                    $o1 = 'Win'; $o2 = 'Loss';
-                } elseif ($s1 < $s2) {
-                    $o1 = 'Loss'; $o2 = 'Win';
-                } else {
-                    $o1 = $o2 = 'Draw';
-                }
-
+                $o1 = $s1 > $s2 ? 'Win' : ($s1 < $s2 ? 'Loss' : 'Draw');
+                $o2 = $s1 < $s2 ? 'Win' : ($s1 > $s2 ? 'Loss' : 'Draw');
+    
                 // Insert into database
                 $wpdb->insert($table_name, [
                     'tournament_name'  => $tournament_name,
@@ -365,7 +433,7 @@ function rankings_parse_milarki_data($tournament_name, $start_date, $rounds) {
                     'player_2_outcome' => $o2,
                     'source'           => 'Milarki'
                 ]);
-
+    
                 // Prepare for display
                 $parsed[] = [
                     'Tournament Name'   => $tournament_name,
@@ -494,6 +562,7 @@ function rankings_ingest_bcp_page() {
     <?php
 }
 
+
 /**
  * Render the SNL Parser backend page.
  *
@@ -571,26 +640,26 @@ function rankings_ingest_milarki_page() {
         wp_die(__('You do not have sufficient permissions to access this page.'));
     }
 
-    // Handle form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $tournament_name = sanitize_text_field($_POST['tournament_name']);
-        $start_date      = sanitize_text_field($_POST['start_date']);
-        $rounds          = [];
-        for ($i = 1; $i <= 5; $i++) {
-            if (! empty($_POST["round_$i"])) {
-                $rounds[] = sanitize_textarea_field($_POST["round_$i"]);
+    if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+        $tournament_name = sanitize_text_field( $_POST['tournament_name'] );
+        $start_date      = sanitize_text_field( $_POST['start_date'] );
+        $rounds          = array();
+        for ( $i = 1; $i <= 5; $i++ ) {
+            if ( ! empty( $_POST['round_' . $i] ) ) {
+                $round_text = str_replace( 'No List', 'View List', $_POST['round_' . $i] );
+                $rounds[]   = sanitize_textarea_field( $round_text );
             }
         }
 
-        if (count($rounds) < 1 || count($rounds) > 5) {
-            echo '<div class="error"><p>Please provide between 1 and 5 rounds of data.</p></div>';
+        if ( count( $rounds ) < 1 || count( $rounds ) > 5 ) {
+            echo '<div class="error"><p>Please enter between 1 and 5 rounds.</p></div>';
         } else {
             try {
-                $data = rankings_parse_milarki_data($tournament_name, $start_date, $rounds);
-                echo '<div class="updated"><p>Data parsed and stored successfully!</p></div>';
-                rankings_show_milarki_parsed_data($data);
-            } catch (Exception $e) {
-                echo '<div class="error"><p>' . esc_html($e->getMessage()) . '</p></div>';
+                $data = rankings_parse_bcp_data( $tournament_name, $start_date, $rounds );
+                echo '<div class="updated"><p>BCP data parsed and stored successfully!</p></div>';
+                rankings_show_bcp_parsed_data( $data );
+            } catch ( Exception $e ) {
+                echo '<div class="error"><p>' . $e->getMessage() . '</p></div>';
             }
         }
     }
@@ -603,16 +672,16 @@ function rankings_ingest_milarki_page() {
         <table class="form-table">
           <tr>
             <th scope="row">Tournament Name</th>
-            <td><input type="text" name="tournament_name" required style="width:100%"></td>
+            <td><input type="text" name="tournament_name" value="<?php echo esc_attr($tournament_name); ?>" required style="width:100%"></td>
           </tr>
           <tr>
             <th scope="row">Start Date</th>
-            <td><input type="date" name="start_date" required></td>
+            <td><input type="date" name="start_date" value="<?php echo esc_attr($start_date); ?>" required></td>
           </tr>
           <?php for ($i = 1; $i <= 5; $i++): ?>
             <tr>
               <th scope="row">Round <?php echo $i; ?></th>
-              <td><textarea name="round_<?php echo $i; ?>" rows="6" style="width:100%;"></textarea></td>
+              <td><textarea name="round_<?php echo $i; ?>" rows="6" style="width:100%;"><?php echo esc_textarea($rounds[$i]); ?></textarea></td>
             </tr>
           <?php endfor; ?>
         </table>
