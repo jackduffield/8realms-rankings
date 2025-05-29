@@ -801,6 +801,266 @@ function rankings_health_check_page() {
         echo '</tbody></table>';
     }
 
+    // Jagged Rows Health Check
+    echo '<h2>Jagged Rows (Missing Required Fields)</h2>';
+    $jagged_rows = $wpdb->get_results(
+        "SELECT * FROM $table_name WHERE 
+            tournament_name = '' OR tournament_name IS NULL OR
+            start_date = '' OR start_date IS NULL OR
+            round IS NULL OR
+            table_number IS NULL OR
+            player_1_name = '' OR player_1_name IS NULL OR
+            player_1_faction = '' OR player_1_faction IS NULL OR
+            player_1_outcome = '' OR player_1_outcome IS NULL OR
+            player_2_name = '' OR player_2_name IS NULL OR
+            player_2_faction = '' OR player_2_faction IS NULL OR
+            player_2_outcome = '' OR player_2_outcome IS NULL OR
+            source = '' OR source IS NULL",
+        ARRAY_A
+    );
+    if ( empty( $jagged_rows ) ) {
+        echo '<p>No jagged rows found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>ID</th><th>Tournament</th><th>Date</th><th>Round</th><th>Table</th><th>P1 Name</th><th>P2 Name</th><th>Source</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $jagged_rows as $row ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $row['id'] ) . '</td>';
+            echo '<td>' . esc_html( $row['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $row['round'] ) . '</td>';
+            echo '<td>' . esc_html( $row['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_2_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['source'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Skipped Table Numbers Health Check
+    echo '<h2>Skipped Table Numbers</h2>';
+    $skipped_issues = array();
+    $tournament_rounds = $wpdb->get_results(
+        "SELECT DISTINCT tournament_name, start_date, round FROM $table_name ORDER BY tournament_name, start_date, round",
+        ARRAY_A
+    );
+    foreach ( $tournament_rounds as $tr ) {
+        $tables = $wpdb->get_col( $wpdb->prepare(
+            "SELECT table_number FROM $table_name WHERE tournament_name = %s AND start_date = %s AND round = %d ORDER BY table_number ASC",
+            $tr['tournament_name'], $tr['start_date'], $tr['round']
+        ) );
+        if ( empty( $tables ) ) continue;
+        $expected = range( 1, max( $tables ) );
+        $missing = array_diff( $expected, $tables );
+        if ( $tables[0] != 1 || !empty($missing) ) {
+            $skipped_issues[] = array(
+                'tournament_name' => $tr['tournament_name'],
+                'start_date' => $tr['start_date'],
+                'round' => $tr['round'],
+                'present' => implode(', ', $tables),
+                'missing' => implode(', ', $missing)
+            );
+        }
+    }
+    if ( empty( $skipped_issues ) ) {
+        echo '<p>No skipped table numbers found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>Tournament</th><th>Date</th><th>Round</th><th>Present Tables</th><th>Missing Tables</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $skipped_issues as $issue ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $issue['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['round'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['present'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['missing'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Duplicate Players in a Single Match
+    echo '<h2>Duplicate Players in a Single Match</h2>';
+    $duplicate_players = $wpdb->get_results(
+        "SELECT * FROM $table_name WHERE LOWER(player_1_name) = LOWER(player_2_name)",
+        ARRAY_A
+    );
+    if ( empty( $duplicate_players ) ) {
+        echo '<p>No matches with duplicate players found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>ID</th><th>Tournament</th><th>Date</th><th>Round</th><th>Table</th><th>Player Name</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $duplicate_players as $row ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $row['id'] ) . '</td>';
+            echo '<td>' . esc_html( $row['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $row['round'] ) . '</td>';
+            echo '<td>' . esc_html( $row['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_name'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Impossible Outcomes
+    echo '<h2>Impossible Outcomes</h2>';
+    $impossible_outcomes = $wpdb->get_results(
+        "SELECT * FROM $table_name WHERE player_1_outcome = player_2_outcome AND player_1_outcome NOT IN ('Draw', 'Bye')",
+        ARRAY_A
+    );
+    if ( empty( $impossible_outcomes ) ) {
+        echo '<p>No impossible outcomes found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>ID</th><th>Tournament</th><th>Date</th><th>Round</th><th>Table</th><th>P1 Name</th><th>P2 Name</th><th>Outcome</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $impossible_outcomes as $row ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $row['id'] ) . '</td>';
+            echo '<td>' . esc_html( $row['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $row['round'] ) . '</td>';
+            echo '<td>' . esc_html( $row['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_2_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_outcome'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Future Dates
+    echo '<h2>Future Dates</h2>';
+    $future_dates = $wpdb->get_results(
+        "SELECT * FROM $table_name WHERE start_date > CURDATE()",
+        ARRAY_A
+    );
+    if ( empty( $future_dates ) ) {
+        echo '<p>No matches with future dates found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>ID</th><th>Tournament</th><th>Date</th><th>Round</th><th>Table</th><th>P1 Name</th><th>P2 Name</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $future_dates as $row ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $row['id'] ) . '</td>';
+            echo '<td>' . esc_html( $row['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $row['round'] ) . '</td>';
+            echo '<td>' . esc_html( $row['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_2_name'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Round Number Consistency
+    echo '<h2>Round Number Consistency</h2>';
+    $round_issues = array();
+    $tournaments = $wpdb->get_results(
+        "SELECT DISTINCT tournament_name, start_date FROM $table_name ORDER BY tournament_name, start_date",
+        ARRAY_A
+    );
+    foreach ( $tournaments as $t ) {
+        $rounds = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT round FROM $table_name WHERE tournament_name = %s AND start_date = %s ORDER BY round ASC",
+            $t['tournament_name'], $t['start_date']
+        ) );
+        if ( empty( $rounds ) ) continue;
+        $expected = range( 1, max( $rounds ) );
+        $missing = array_diff( $expected, $rounds );
+        if ( $rounds[0] != 1 || !empty($missing) ) {
+            $round_issues[] = array(
+                'tournament_name' => $t['tournament_name'],
+                'start_date' => $t['start_date'],
+                'present' => implode(', ', $rounds),
+                'missing' => implode(', ', $missing)
+            );
+        }
+    }
+    if ( empty( $round_issues ) ) {
+        echo '<p>No round number issues found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>Tournament</th><th>Date</th><th>Present Rounds</th><th>Missing Rounds</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $round_issues as $issue ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $issue['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['present'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['missing'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Table Number Duplicates
+    echo '<h2>Table Number Duplicates</h2>';
+    $table_duplicates = $wpdb->get_results(
+        "SELECT tournament_name, start_date, round, table_number, COUNT(*) as count
+         FROM $table_name
+         GROUP BY tournament_name, start_date, round, table_number
+         HAVING count > 1",
+        ARRAY_A
+    );
+    if ( empty( $table_duplicates ) ) {
+        echo '<p>No duplicate table numbers found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>Tournament</th><th>Date</th><th>Round</th><th>Table Number</th><th>Count</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $table_duplicates as $row ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $row['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $row['round'] ) . '</td>';
+            echo '<td>' . esc_html( $row['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $row['count'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Outcome Value Validation
+    echo '<h2>Outcome Value Validation</h2>';
+    $allowed_outcomes = array('Win', 'Loss', 'Draw', 'Bye');
+    $outcome_placeholders = implode(",", array_fill(0, count($allowed_outcomes), '%s'));
+    $invalid_outcomes = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT * FROM $table_name WHERE player_1_outcome NOT IN ($outcome_placeholders) OR player_2_outcome NOT IN ($outcome_placeholders)",
+            array_merge($allowed_outcomes, $allowed_outcomes)
+        ),
+        ARRAY_A
+    );
+    if ( empty( $invalid_outcomes ) ) {
+        echo '<p>All outcomes are valid.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>ID</th><th>Tournament</th><th>Date</th><th>Round</th><th>Table</th><th>P1 Name</th><th>P1 Outcome</th><th>P2 Name</th><th>P2 Outcome</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $invalid_outcomes as $row ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $row['id'] ) . '</td>';
+            echo '<td>' . esc_html( $row['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $row['round'] ) . '</td>';
+            echo '<td>' . esc_html( $row['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_1_outcome'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_2_name'] ) . '</td>';
+            echo '<td>' . esc_html( $row['player_2_outcome'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
     echo '</div>';
 }
 // EOF
