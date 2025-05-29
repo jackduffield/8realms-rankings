@@ -595,6 +595,7 @@ function manage_rankings_menu() {
     add_submenu_page( 'rankings-management', 'Manage Data', 'Manage Data', 'edit_others_posts', 'data-manager', 'rankings_page' );
     add_submenu_page( 'rankings-management', 'Search Data', 'Search Data', 'edit_others_posts', 'search-data', 'rankings_search_page' );
     add_submenu_page( 'rankings-management', 'Manage Backups', 'Manage Backups', 'edit_others_posts', 'backup-manager', 'rankings_backup_page' );
+    add_submenu_page( 'rankings-management', 'Data Health Checks', 'Data Health Checks', 'edit_others_posts', 'data-health-checks', 'rankings_health_check_page' );
     remove_submenu_page( 'rankings-management', 'rankings-management' );
 }
 add_action( 'admin_menu', 'manage_rankings_menu' );
@@ -683,4 +684,85 @@ function rankings_backup_page() {
     echo '</div>';
 }
  
+<?php
+/**
+ * Render the Data Health Check page.
+ *
+ * Displays data health checks for the match_data table.
+ *
+ * @return void
+ */
+function rankings_health_check_page() {
+    if ( ! current_user_can( 'edit_others_posts' ) ) {
+        wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'match_data';
+
+    echo '<div class="wrap">';
+    echo '<h1>Data Health Checks</h1>';
+    echo '<p>This page displays potential issues with the data stored in the <code>match_data</code> table.</p>';
+
+    // Check for names with multiple capitalizations
+    echo '<h2>Names with Multiple Capitalizations</h2>';
+    $name_issues = $wpdb->get_results(
+        "SELECT player_name, COUNT(DISTINCT LOWER(player_name)) AS variations
+         FROM (
+             SELECT player_1_name AS player_name FROM $table_name
+             UNION ALL
+             SELECT player_2_name AS player_name FROM $table_name
+         ) AS names
+         GROUP BY LOWER(player_name)
+         HAVING variations > 1",
+        ARRAY_A
+    );
+
+    if ( empty( $name_issues ) ) {
+        echo '<p>No issues found with player name capitalizations.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>Player Name</th><th>Capitalization Variations</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $name_issues as $issue ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $issue['player_name'] ) . '</td>';
+            echo '<td>' . esc_html( $issue['variations'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    // Check for repeated matches with different IDs
+    echo '<h2>Repeated Matches with Different IDs</h2>';
+    $duplicate_matches = $wpdb->get_results(
+        "SELECT GROUP_CONCAT(id) AS ids, tournament_name, start_date, round, table_number, player_1_name, player_2_name
+         FROM $table_name
+         GROUP BY tournament_name, start_date, round, table_number, player_1_name, player_2_name
+         HAVING COUNT(*) > 1",
+        ARRAY_A
+    );
+
+    if ( empty( $duplicate_matches ) ) {
+        echo '<p>No duplicate matches found.</p>';
+    } else {
+        echo '<table class="widefat fixed" cellspacing="0">';
+        echo '<thead><tr><th>IDs</th><th>Tournament Name</th><th>Start Date</th><th>Round</th><th>Table Number</th><th>Player 1</th><th>Player 2</th></tr></thead>';
+        echo '<tbody>';
+        foreach ( $duplicate_matches as $match ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $match['ids'] ) . '</td>';
+            echo '<td>' . esc_html( $match['tournament_name'] ) . '</td>';
+            echo '<td>' . esc_html( $match['start_date'] ) . '</td>';
+            echo '<td>' . esc_html( $match['round'] ) . '</td>';
+            echo '<td>' . esc_html( $match['table_number'] ) . '</td>';
+            echo '<td>' . esc_html( $match['player_1_name'] ) . '</td>';
+            echo '<td>' . esc_html( $match['player_2_name'] ) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    echo '</div>';
+}
 // EOF
