@@ -683,8 +683,7 @@ function rankings_backup_page() {
     }
     echo '</div>';
 }
- 
-<?php
+
 /**
  * Render the Data Health Check page.
  *
@@ -700,34 +699,67 @@ function rankings_health_check_page() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'match_data';
 
+    // Handle fix duplicate matches
+    if ( isset( $_POST['fix_duplicate'] ) && !empty( $_POST['duplicate_ids'] ) ) {
+        $ids = explode( ',', sanitize_text_field( $_POST['duplicate_ids'] ) );
+        // Keep the first, delete the rest
+        $ids_to_delete = array_slice( $ids, 1 );
+        foreach ( $ids_to_delete as $id ) {
+            $wpdb->delete( $table_name, array( 'id' => intval( $id ) ) );
+        }
+        echo '<div class="updated"><p>Duplicate rows fixed: deleted IDs ' . esc_html( implode( ', ', $ids_to_delete ) ) . '.</p></div>';
+    }
+
+    // Handle fix capitalisation
+    if ( isset( $_POST['fix_capitalisation'] ) && !empty( $_POST['name_variants'] ) && !empty( $_POST['canonical_name'] ) ) {
+        $variants = explode( ',', sanitize_text_field( $_POST['name_variants'] ) );
+        $canonical = sanitize_text_field( $_POST['canonical_name'] );
+        foreach ( $variants as $variant ) {
+            if ( $variant !== $canonical ) {
+                // Update both player_1_name and player_2_name
+                $wpdb->update( $table_name, [ 'player_1_name' => $canonical ], [ 'player_1_name' => $variant ] );
+                $wpdb->update( $table_name, [ 'player_2_name' => $canonical ], [ 'player_2_name' => $variant ] );
+            }
+        }
+        echo '<div class="updated"><p>Capitalisation fixed: all variants set to ' . esc_html( $canonical ) . '.</p></div>';
+    }
+
     echo '<div class="wrap">';
     echo '<h1>Data Health Checks</h1>';
     echo '<p>This page displays potential issues with the data stored in the <code>match_data</code> table.</p>';
 
     // Check for names with multiple capitalizations
     echo '<h2>Names with Multiple Capitalizations</h2>';
-    $name_issues = $wpdb->get_results(
-        "SELECT player_name, COUNT(DISTINCT LOWER(player_name)) AS variations
+    $name_variants = $wpdb->get_results(
+        "SELECT LOWER(player_name) as lower_name, GROUP_CONCAT(DISTINCT player_name) as variants, COUNT(DISTINCT player_name) as variations
          FROM (
              SELECT player_1_name AS player_name FROM $table_name
              UNION ALL
              SELECT player_2_name AS player_name FROM $table_name
          ) AS names
-         GROUP BY LOWER(player_name)
+         GROUP BY lower_name
          HAVING variations > 1",
         ARRAY_A
     );
 
-    if ( empty( $name_issues ) ) {
+    if ( empty( $name_variants ) ) {
         echo '<p>No issues found with player name capitalizations.</p>';
     } else {
         echo '<table class="widefat fixed" cellspacing="0">';
-        echo '<thead><tr><th>Player Name</th><th>Capitalization Variations</th></tr></thead>';
+        echo '<thead><tr><th>Player Name Variants</th><th>Fix</th></tr></thead>';
         echo '<tbody>';
-        foreach ( $name_issues as $issue ) {
+        foreach ( $name_variants as $issue ) {
+            $variants = explode(',', $issue['variants']);
+            $canonical = ucwords(strtolower($variants[0]));
             echo '<tr>';
-            echo '<td>' . esc_html( $issue['player_name'] ) . '</td>';
-            echo '<td>' . esc_html( $issue['variations'] ) . '</td>';
+            echo '<td>' . esc_html( implode(', ', $variants) ) . '</td>';
+            echo '<td>';
+            echo '<form method="post" style="display:inline;">';
+            echo '<input type="hidden" name="name_variants" value="' . esc_attr( implode(',', $variants) ) . '" />';
+            echo '<input type="hidden" name="canonical_name" value="' . esc_attr( $canonical ) . '" />';
+            echo '<input type="submit" name="fix_capitalisation" value="Fix to ' . esc_attr( $canonical ) . '" class="button button-secondary" onclick="return confirm(\'Fix all variants to ' . esc_attr( $canonical ) . '?\');" />';
+            echo '</form>';
+            echo '</td>';
             echo '</tr>';
         }
         echo '</tbody></table>';
@@ -747,7 +779,7 @@ function rankings_health_check_page() {
         echo '<p>No duplicate matches found.</p>';
     } else {
         echo '<table class="widefat fixed" cellspacing="0">';
-        echo '<thead><tr><th>IDs</th><th>Tournament Name</th><th>Start Date</th><th>Round</th><th>Table Number</th><th>Player 1</th><th>Player 2</th></tr></thead>';
+        echo '<thead><tr><th>IDs</th><th>Tournament Name</th><th>Start Date</th><th>Round</th><th>Table Number</th><th>Player 1</th><th>Player 2</th><th>Fix</th></tr></thead>';
         echo '<tbody>';
         foreach ( $duplicate_matches as $match ) {
             echo '<tr>';
@@ -758,6 +790,12 @@ function rankings_health_check_page() {
             echo '<td>' . esc_html( $match['table_number'] ) . '</td>';
             echo '<td>' . esc_html( $match['player_1_name'] ) . '</td>';
             echo '<td>' . esc_html( $match['player_2_name'] ) . '</td>';
+            echo '<td>';
+            echo '<form method="post" style="display:inline;">';
+            echo '<input type="hidden" name="duplicate_ids" value="' . esc_attr( $match['ids'] ) . '" />';
+            echo '<input type="submit" name="fix_duplicate" value="Fix (Keep First)" class="button button-secondary" onclick="return confirm(\'Delete all but the first row for these duplicates?\');" />';
+            echo '</form>';
+            echo '</td>';
             echo '</tr>';
         }
         echo '</tbody></table>';
