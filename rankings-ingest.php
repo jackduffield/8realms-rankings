@@ -35,6 +35,8 @@ function rankings_ingest_menu() {
     // Submenu page for Ingest Milarki Data.
     add_submenu_page( 'rankings-ingest', 'Ingest From Milarki', 'Ingest From Milarki', 'edit_others_posts', 'milarki-parser', 'rankings_ingest_milarki_page' );
 
+add_submenu_page( 'rankings-ingest', 'Calculate Elos', 'Calculate Elos', 'edit_others_posts', 'elo-calculator', 'elo_calculator_page' );
+
     // Remove the duplicate submenu for the top-level menu.
     remove_submenu_page( 'rankings-ingest', 'rankings-ingest' );
 }
@@ -640,10 +642,15 @@ function rankings_ingest_milarki_page() {
         wp_die(__('You do not have sufficient permissions to access this page.'));
     }
 
+    // Always initialize variables before use
+    $tournament_name = '';
+    $start_date = '';
+    $rounds = array();
+
     if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
         $tournament_name = sanitize_text_field( $_POST['tournament_name'] );
         $start_date      = sanitize_text_field( $_POST['start_date'] );
-        $rounds          = array();
+        $rounds = array();
         for ( $i = 1; $i <= 5; $i++ ) {
             if ( ! empty( $_POST['round_' . $i] ) ) {
                 $round_text = str_replace( 'No List', 'View List', $_POST['round_' . $i] );
@@ -685,7 +692,7 @@ function rankings_ingest_milarki_page() {
           <?php for ($i = 1; $i <= 5; $i++): ?>
             <tr>
               <th scope="row">Round <?php echo $i; ?></th>
-              <td><textarea name="round_<?php echo $i; ?>" rows="6" style="width:100%;"><?php echo esc_textarea($rounds[$i]); ?></textarea></td>
+              <td><textarea name="round_<?php echo $i; ?>" rows="6" style="width:100%;"><?php echo esc_textarea(isset($rounds[$i]) ? $rounds[$i] : ''); ?></textarea></td>
             </tr>
           <?php endfor; ?>
         </table>
@@ -871,17 +878,6 @@ function rankings_calculate_elos() {
     }
 }
 
-/**
- * Register the Elo Calculator submenu page.
- *
- * Adds the Elo Calculator page under the Data Ingest admin menu.
- *
- * @return void
- */
-function elo_calculator_menu() {
-    add_submenu_page( 'data-ingest', 'Calculate Elos', 'Calculate Elos', 'edit_others_posts', 'elo-calculator', 'elo_calculator_page' );
-}
-add_action( 'admin_menu', 'elo_calculator_menu' );
 
 /**
  * Render the Elo Calculator admin page.
